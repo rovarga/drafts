@@ -69,7 +69,7 @@
 	<email>robert.varga@pantheon.sk</email>
       </address>
     </author>
-    <date day="14" month="March" year="2013" />
+    <date day="22" month="March" year="2013" />
 
     <workgroup>Network Working Group</workgroup>
 
@@ -82,7 +82,7 @@
       available to the PCE, it also makes no provisions for synchronization or
       PCE control of timing and sequence of path computations within and across
       PCEP sessions. This document describes a set of extensions to PCEP to
-      enable stateful control of MPLS-TE and GMPLS tunnels via PCEP.</t>
+      enable stateful control of MPLS-TE and GMPLS LSPs via PCEP.</t>
       
     </abstract>
 
@@ -104,9 +104,9 @@
 	  support of GMPLS in PCEP are defined in <xref target='I-D.ietf-pce-gmpls-pcep-extensions'></xref> </t>
 
       <t>This document specifies a set of extensions to PCEP to enable stateful
-      control of tunnels between and across PCEP sessions in compliance with
-      <xref target="RFC4657"/>.  It includes mechanisms to effect tunnel state
-      synchronization between PCCs and PCEs, delegation of control over tunnels to
+      control of LSPs between and across PCEP sessions in compliance with
+      <xref target="RFC4657"/>.  It includes mechanisms to effect LSP state
+      synchronization between PCCs and PCEs, delegation of control over LSPs to
       PCEs, and PCE control of timing and sequence of path computations within
       and across PCEP sessions.</t>
 
@@ -124,16 +124,16 @@
 
       <list style="hanging">
 	<t hangText="Passive Stateful PCE:"> uses LSP state information learned
-	from PCCs to optimize path computations. It does not actively update tunnel
+	from PCCs to optimize path computations. It does not actively update LSP
 	state. A PCC maintains synchronization with the PCE.</t>
 
 	<t hangText="Active Stateful PCE:"> is an extension of Passive Stateful PCE, which
-     utilizes the Delegation mechanism to update tunnel parameters 
-     in those PCCs that delegated control over their tunnels to the PCE.</t>
+     utilizes the Delegation mechanism to update LSP parameters 
+     in those PCCs that delegated control over their LSPs to the PCE.</t>
 
 	<t hangText="Delegation:">An operation to grant a PCE temporary rights
-	to modify a subset of tunnel parameters on one or more PCC's tunnels. Tunnels
-	are delegated from a PCC to a PCE, and are referred to as delegated tunnels.
+	to modify a subset of LSP parameters on one or more PCC's LSPs. LSPs
+	are delegated from a PCC to a PCE, and are referred to as delegated LSPs.
 	The PCC who owns the PCE state for the LSP has the right to delegate it. An LSP 
 	is owned by a single PCC at any given point in time. 
 	</t>
@@ -143,7 +143,7 @@
 	 in the delegation operation. </t>
 
 	<t hangText="Delegation Timeout Interval:"> when a PCEP session is
-	terminated, a PCC waits for this time period before revoking tunnel
+	terminated, a PCC waits for this time period before revoking LSP
 	delegation to a PCE. The delegation timeout interval is a PCC-local value that 
 	can be either operator-configured or dynamically computed by the PCC based on 
 	local policy. </t>
@@ -421,7 +421,7 @@
 	    ingress admission control at the LSP level. Again, having ingress
 	    admission control on a per LSP basis is not necessarily desirable
 	    from an operational perspective, as a) one must over-provision
-	    tunnels significantly in order to avoid deleterious effects
+	    LSPs significantly in order to avoid deleterious effects
 	    resulting from stacked transport and flow control systems and b)
 	    there is currently no efficient commonly available northbound
 	    interface for dynamic configuration of per LSP ingress admission
@@ -989,12 +989,16 @@
 
 	  <t>If both PCEP Speakers include the LSP-DB-VERSION TLV in the OPEN
 	  Object and the TLV values match, the PCC MAY skip State
-	  Synchronization. Otherwise, the PCE MUST purge any remaining LSP state
-	  and expect the PCC to perform State Synchronization; if the PCC
+	  Synchronization. Otherwise, the PCC MUST perform State Synchronization.
+	  If the PCC
 	  attempts to skip State Synchronization (i.e. the SYNC Flag = 0 on the
 	  first LSP State Report from the PCC), the PCE MUST send back a PCError
 	  with Error-type 20 Error-value 2 'LSP Database version mismatch', and
 	  close the PCEP session.</t>
+	  
+	  <t> 
+	  If state synchronization is required, then after the Initialization phase has completed, the PCE MUST mark any LSPs in the LSP database that were previously reported by the PCC as stale.  When the PCC reports an LSP during state synchronization, if the LSP already exists in the LSP database, the PCE MUST update the LSP database and clear the stale marker from the LSP.  When it has finished state synchronization, the PCC MUST immediately send a PCRpt message containing a state-report with an LSP object containing an PLSP-ID of 0 and with the SYNC flag set to 0 (see <xref target="Synchronization" />).  This state-report indicates to the PCE that state synchronization has completed.  On receiving this state-report, the PCE MUST purge any LSPs from the LSP database that are still marked as stale.
+	  </t>
 
 	  <t>Note that a PCE MAY force State Synchronization by not including
 	  the LSP-DB-VERSION TLV in its OPEN object.</t>
@@ -1114,7 +1118,8 @@
 	
 	<t>LSP Delegation is controlled by operator-defined policies on a PCC.
 	LSPs are delegated individually - different LSPs may be delegated to
-	different PCEs, and an LSP may be delegated to one or more PCEs.The
+	different PCEs. An LSP is delegated to at most one PCE at any 
+	given point in time. The
 	delegation policy, when all PCC's LSPs are delegated to a single PCE at
 	any given time, SHOULD be supported by all delegation-capable
 	PCCs. Conversely, the policy revoking the delegation for all PCC's LSPs
@@ -1171,9 +1176,11 @@
 	  <t>When a PCC decides that a PCE is no longer permitted to modify an
 	  LSP, it revokes that LSP's delegation to the PCE.  A PCC may revoke an
 	  LSP delegation at any time during the LSP's life time.  A PCC revoking
-	  a LSP MAY immediately clear the LSP state provided by the PCE, and
-	  MUST ignore any further PCUpd messages received regarding the revoked
-	  LSP from the previous PCE delegate.</t>
+	  an LSP delegation MAY immediately clear the LSP state provided by the PCE.
+	  If the PCC has received but not yet acted on PCupd messages from the PCE for
+	  the LSP whose delegation is being revoked, then it SHOULD ignore these PCupd 
+	  messages when processing the message queue. Any further PCupd messages are
+	  handled according to the PCupd procedures described in this document.</t>
 
 	  <t>If a PCEP session with the PCE to which the LSP is delegated exists
 	  in the UP state during the revocation, the PCC MUST notify that PCE by
@@ -1409,26 +1416,8 @@
       </section>
 
       <section anchor="LSP-Protection" title="LSP Protection">
-	<t>With a stateless PCE or a passive stateful PCE, LSP protection and
-	restoration settings may be operator-configured locally at a PCC. A PCE
-	may be merely asked to compute the protected (primary) and backup
-	(secondary) paths for the LSP.</t>
-
-	<t>An active stateful PCE controls the LSPs that are delegated to it,
-	and must therefore be able to set via PCEP the desired protection /
-	restoration mechanism for each delegated LSP. PCEP extensions for
-	stateful PCEs SHOULD support, at a minimum, the following protection
-	mechanisms for MPLS-TE LSPs:
-	
-	<list style="symbols">
-	  <t>MPLS TE Global Default Restoration</t>
-	  <t>MPLS TE Global Path Protection</t>
-	  <t>FRR One-to-One Backup</t>
-	  <t>FRR Facility Backup - link protection, node protection, or both</t>
-	</list>
-	</t>
-	<t> The necessary extensions for support of protection are described in technology-specific
-	documents. </t>
+		<t> LSP protection and interaction with stateful PCE, as well as the extensions 
+		necessary to implement this functionality will be discussed in a separate draft. </t> 
       </section>
 
       <section anchor="Transport" title="Transport">
@@ -1528,10 +1517,12 @@ Where:
 	</t>
 
 
-	<t>Each LSP Update Request results in a separate LSP setup operation at
-	a PCC. An LSP Update Request MUST contain all LSP parameters that a PCC
+	<t>A PCC only acts on an LSP Update Request if permitted by the local 
+	policy configured by the network manager.  Each LSP Update Request 
+	that the PCC acts on results in an LSP setup operation.
+	An LSP Update Request MUST contain all LSP parameters that a PCC
 	wishes to set for the LSP. A PCC MAY set missing parameters from locally
-	configured defaults. If the LSP specified the Update Request is already
+	configured defaults. If the LSP specified in the Update Request is already
 	up, it will be re-signaled. The PCC will use make-before-break whenever
 	possible in the re-signaling operation.</t>
 	
