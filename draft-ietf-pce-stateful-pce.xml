@@ -69,7 +69,7 @@
 	<email>robert.varga@pantheon.sk</email>
       </address>
     </author>
-    <date day="25" month="February" year="2013" />
+    <date day="14" month="March" year="2013" />
 
     <workgroup>Network Working Group</workgroup>
 
@@ -1384,7 +1384,9 @@
 	  <t>Upon receiving a PCUpd message the PCC starts to setup LSPs
 	  specified in LSP Update Requests carried in the message. For each LSP,
 	  it sends an LSP State Report carried on a PCRpt message to the PCE,
-	  indicating that the LSP's status is 'Pending'.
+	  indicating that the LSP's status is 'Pending'.If the PCC decides that
+	  the LSP parameters proposed in the PCUpd message are unacceptable, it 
+	  SHOULD revoke the delegation.
 	  </t>
 
 	  <t>Once an LSP is up, the PCC sends an LSP State Report (PCRpt
@@ -1398,7 +1400,9 @@
 	  connected to the PCC.</t>
 
 	  <t>A PCC MUST NOT send to any PCE a Path Computation Request for a
-	  delegated LSP.
+	  delegated LSP. Should the PCC decide it wants to issue a Path
+      Computation Request on a delegated LSP, it MUST perform Delegation
+      Revocation procedure first.
 	  </t>
 	</section>
 	
@@ -1474,7 +1478,7 @@ Where:
    <path-list>::=<path>[<path-list>]
  
 Where:
-   <path> is defined in technology-specific documents per LSP type.
+     <path-list> is defined in [RFC5440] and extended by PCEP extensions.
 	  ]]></artwork>
 	</figure>
 	
@@ -1549,7 +1553,8 @@ Where:
 	<t>Note also that it's up to the PCE to handle inter-LSP dependencies;
 	for example, if ordering of LSP set-ups is required, the PCE has to wait
 	for an LSP State Report for a previous LSP before starting the update of 
-	the next LSP.</t>
+	the next LSP. If the PCUpd cannot be satisfied (for example due to
+	unsupported object or TLV), the PCC MUST respond with an PCErr message</t>
     </section>
 
     <section anchor="PCReq" title="The PCReq Message">
@@ -1779,8 +1784,8 @@ Where:
 	 PCC. This symbolic path name MUST remain constant throughout a path's
 	 lifetime, which may span across multiple consecutive PCEP sessions
 	 and/or PCC restarts. The symbolic path name MAY be specified by an
-	 operator in a PCC's CLI configuration. If the operator does not specify
-	 a symbolic name for a path, the PCC MUST auto-generate one.</t>
+	 operator in a PCC's configuration. If the operator does not specify
+	 a unique symbolic name for a path, the PCC MUST auto-generate one.</t>
 
 	 <t>The SYMBOLIC-PATH-NAME TLV MUST be included in the LSP State
 	 Report when during a given PCEP session an LSP is first reported to a
@@ -2252,7 +2257,8 @@ Where:
 
      <t>We would like to thank Shane Amante,Julien Meuric, Kohei Shiomoto, Paul
      Schultz and Raveendra Torvi for their comments and suggestions. Thanks also
-     to Dhruv Dhoddy, Oscar Gonzales de Dios, Tomas Janciga, Stefan Kobza,
+     to Cyril Margaria, Jon Hardwick, Dhruv Dhoddy, Oscar Gonzales de Dios, 
+	 Tomas Janciga, Stefan Kobza,
      Kexin Tang, Matej Spanik, Jon Parker, Marek Zavodsky and Calvin Ying 
 	 for helpful comments and discussions.</t>
     </section>
