@@ -30,7 +30,11 @@
 			</address>
 		</author>
 
-		<date day="18" month="December" year="2012" />
+		<author fullname="Cyril Margaria" initials="C." surname="Margaria">
+			<!-- FIXME: more details once Cyril agrees to participate -->
+		</author>
+
+		<date day="10" month="January" year="2013" />
 
 		<workgroup>Network Working Group</workgroup>
 
@@ -44,7 +48,7 @@
 				When a Path Computation Client (PCC) requests a PCE for a route, it
 				may request a specific amount of bandwidth for a TE LSP. Protocol
 				support for this capability is described in <xref target="RFC5440"/>,
-				which defines BANDWIDTH object for this purpose.
+				which defines the BANDWIDTH object for this purpose.
 			</t>
 			<t>
 				Unfortunately the definition provided therein does not allow the
@@ -69,25 +73,44 @@
 			<t>
 				<xref target="RFC5440"/> describes the Path Computation Element
 				Protocol PCEP.  PCEP defines the communication between a Path Computation
-				Client (PCC) and a Path Control Element (PCE), or between PCE and PCE,
-				enabling computation of Multiprotocol Label Switching (MPLS) for Traffic
-				Engineering Label Switched Path (TE LSP) characteristics.
+				Client (PCC) and a Path Computation Element (PCE), or between PCE and PCE,
+				enabling computation of Multiprotocol Label Switching (MPLS) Traffic
+				Engineered Label Switched Paths (TE LSPs).
 			</t>
 
 			<t>
 				<xref target='I-D.ietf-pce-gmpls-pcep-extensions'/> specifies a set of
-				extensions to PCEP to enable its use in GMPLS networks. It defines a set
-				of new objects which provide introduce new variations of concepts
-				already defined in <xref target="RFC5440"/>. It then rolls up message
-				definitions on all currently known drafts and RFCs, replacing their use
-				of the non-generalized objects with the generalized ones.
+				extensions to PCEP to enable its use in GMPLS networks. Among GMPLS-specific
+				objects, it also defines GENERALIZED-BANDWIDTH and GENERALIZED-LOAD-BALANCE,
+				as replacements for BANDWIDTH and LOAD-BALANCE objects defined in
+				<xref target="RFC5440"/>. The definition is needed because <xref target="RFC5440"/>,
+				does not provide any way of extending BANDWIDTH and LOAD-BALANCE objects,
+				eventhough it provides extension points in all other objects it defines.
+			</t>
+
+			<t>
+				<xref target='I-D.ietf-pce-gmpls-pcep-extensions'/> then defines a new
+				definition of PCEP message format, which rolls into it all previously
+				published PCEP extensions (like <xref target="RFC5521"/> and <xref target="RFC5541"/>).
+				This places a requirement for any strictly-GMPLS compliant implementation to
+				also understand all those extensions.
 			</t>
 
 			<t>
 				This document describes an alternative approach, which works by allowing
-				peers to negotiate the use of an updated defintion of BANDWIDTH object
-				and its on-wire format, which meet requirements set out in
-				<xref target="I-D.ietf-pce-gmpls-aps-req"/>.
+				peers to negotiate the use of an updated definition of the BANDWIDTH and
+				LOAD-BALANCE objects and their on-wire format, which meets the requirements
+				set out in <xref target="I-D.ietf-pce-gmpls-aps-req"/>, while also providing
+				extension points on-par with other objects defined in <xref target="RFC5440"/>.
+			</t>
+
+			<t>
+				The motivation for this proposal is to take out the base protocol fixes
+				from <xref target='I-D.ietf-pce-gmpls-pcep-extensions'/> and present them
+				for use by other protocol extensions, without them needing to pull in all
+				the other parts of GMPLS extensions. This will hopefully greatly simplify
+				<xref target='I-D.ietf-pce-gmpls-pcep-extensions'/> and ease the job of
+				implementing it within existing PCEP stacks.
 			</t>
 		</section>
 
@@ -135,7 +158,11 @@
 				<t>
 					The PCEP protocol extensions for generalized bandwidth object MUST NOT
 					be used if one or both PCEP speakers have not included the Generalized
-					Bandwidth Capability TLV in its OPEN object.
+					Bandwidth Capability TLV in its OPEN object. If both peers have agreed
+					to use these extension, the object formats defined in this document
+					MUST be used. If any of these requirements is violated, the receiving
+					peer is expected to conform to malformed object processing defined in
+					Section 4.2.6 of <xref target="RFC5440"/>.
 				</t>
 			</section>
 
@@ -184,7 +211,7 @@
 							If set to 1 by a speaker, the G flag indicates, that the
 							speaker supports specification of G.709 traffic specification
 							as defined by <xref target="RFC4328"/>.
-						</t> 
+						</t>
 
 						<t hangText="E (ETHERNET-BANDWIDTH-CAPABILITY - 1 bit):">
 							If set to 1 by a speaker, the E flag indicates, that the
@@ -222,11 +249,7 @@
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                                                               |
-~                   Traffic Specification                       ~
-|                                                               |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                                                               |
-//                      Optional TLVs                          // 
+~                     Traffic Specification                     ~
 |                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ]]>
@@ -239,10 +262,6 @@
 								Traffic specification in the forward direction.
 							</t>
 						</list>
-
-						Optional TLVs may be included within the object to extend the
-						information conveyed by it. The specification of such TLVs is
-						outside the scope of this document.
 					</t>
 				</section>
 
@@ -265,10 +284,6 @@
 ~               Reverse Traffic Specification                   ~
 |                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                                                               |
-//                      Optional TLVs                          // 
-|                                                               |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ]]>
 						</artwork>
 					</figure>
@@ -285,11 +300,6 @@
 								the LSP.
 							</t>
 						</list>
-
-						Optional TLVs may be included within the BANDWIDTH object body
-						to extend the information conveyed by the object. The
-						specification of such TLVs is outside the scope of this
-						document.
 					</t>
 				</section>
 
@@ -305,22 +315,32 @@
  0                   1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|   SENDER_TSPEC Length         | TSpec Type    |   Reserved    |
+|  Traffic Specification Length |   SENDER_TSPEC Length         |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|  TSpec Type   |                   Reserved                    |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                                                               |
 ~                       SENDER_TSPEC                            ~
 |                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+//                      Optional TLVs                          // 
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ]]>
-					</artwork>
-				</figure>
+						</artwork>
+					</figure>
 
 					<list style="hanging">
+						<t hangText="Traffic Specification Length:">
+							Length of the entire Traffic Specification field.
+						</t>
 						<t hangText="SENDER_TSPEC Length:">
 							Length of SENDER_TSPEC field.
 						</t>
 						<t hangText="TSpec Type:">
-							Type of SENDER_TSPEC field.
+							Type of SENDER_TSPEC field. Value of 0 indicates a
+							<xref target="RFC5440"/>-style specification.
 						</t>
 						<t hangText="Reserved:">
 							Reserved for future use. MUST be zero on transmit
@@ -329,8 +349,19 @@
 						<t hangText="SENDER_TSPEC">
 							Body of SENDER_TSPEC, formatted according to the
 							defining document.
+
+							FIXME: backward-compatible IEEE32 bandwidth for
+							RFC5440 compatibility (type=0).
 						</t>
 					</list>
+
+					See capability bit descriptions in <xref target="Capability-TLV"/>
+					for external references to documents defining specific values of
+					TSpec Type and formats of SENDER_TSPEC.
+
+					Optional TLVs may be included within the BANDWIDTH object body
+					to extend the information conveyed by the object. The specification
+					of such TLVs is outside the scope of this document.
 				</t>
 			</section>
 		</section>
@@ -364,8 +395,8 @@
 
 		<section anchor="Acknowledgements" title="Acknowledgements">
 			<t>
-				The author would like to thank Dana Kutenicsova and Jan Medved for their
-				contributions to this document and to the authors of 
+				The author would like to thank Dana Kutenicsova, Ina Minei and Jan Medved
+				for their contributions to this document and to the authors of 
 				<xref target='I-D.ietf-pce-gmpls-pcep-extensions'/> for original TSpec
 				encapsulation approach, which is reused in this document.
 			</t>
@@ -381,6 +412,8 @@
 			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.4328.xml"?>
 			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.4606.xml"?>
 			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5440.xml"?>
+			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5521.xml"?>
+			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5541.xml"?>
 			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.6003.xml"?>
 			<?rfc include="reference.I-D.ietf-pce-gmpls-aps-req"?>
 			<?rfc include="reference.I-D.ietf-pce-gmpls-pcep-extensions"?>
@@ -391,3 +424,4 @@
 		</references>
 	</back>
 </rfc>
+
