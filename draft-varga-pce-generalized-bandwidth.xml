@@ -1,0 +1,406 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd">
+<?rfc toc="yes"?>
+<?rfc tocompact="yes"?>
+<?rfc tocdepth="3"?>
+<?rfc tocindent="yes"?>
+<?rfc symrefs="yes"?>
+<?rfc sortrefs="yes"?>
+<?rfc comments="yes"?>
+<?rfc inline="yes"?>
+<?rfc compact="yes"?>
+<?rfc subcompact="no"?>
+<rfc category="std" docName="draft-varga-pce-generalized-bandwidth-00" ipr="trust200902">
+	<front>
+		<title abbrev="Generalized Bandwidth">
+			PCEP Extensions for Generalized Bandwidth
+		</title>
+
+		<author fullname="Robert Varga" initials="R." surname="Varga">
+			<organization>Pantheon Technologies SRO</organization>
+			<address>
+				<postal>
+					<street>Mlynske Nivy 56</street>
+					<city>Bratislava</city>
+					<code>821 05</code>
+					<country>Slovakia</country>
+				</postal>
+				<email>robert.varga@pantheon.sk</email>
+			</address>
+		</author>
+
+		<date day="8" month="November" year="2012" />
+
+		<workgroup>Network Working Group</workgroup>
+
+		<abstract>
+			<t>
+				The Path Computation Element (PCE) provides functions of path
+				computation in support of traffic engineering (TE) in Multi-Protocol
+				Label Switching (MPLS) and Generalized MPLS (GMPLS) networks.
+			</t>
+			<t>
+				When a Path Computation Client (PCC) requests a PCE for a route, it
+				may request a specific amount of bandwidth for a TE LSP. Protocol
+				support for this capability is described in <xref target="RFC5440"/>,
+				which defines BANDWIDTH object for this purpose.
+			</t>
+			<t>
+				Unfortunately the definition provided therein does not allow the
+				object to be extended to carry information and semantics necessary
+				to cover requirements in GMPLS deployments. This document describes
+				a mechanism which can be used by peers participating in a PCEP session
+				to agree on using an extensible definition of BANDWIDTH.
+			</t>
+		</abstract>
+
+		<note title="Requirements Language">
+			<t>
+				The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+				"SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+				document are to be interpreted as described in <xref target="RFC2119"/>.
+			</t>
+		</note>
+	</front>
+
+	<middle>
+		<section title="Introduction">
+			<t>
+				<xref target="RFC5440"/> describes the Path Computation Element
+				Protocol PCEP.  PCEP defines the communication between a Path Computation
+				Client (PCC) and a Path Control Element (PCE), or between PCE and PCE,
+				enabling computation of Multiprotocol Label Switching (MPLS) for Traffic
+				Engineering Label Switched Path (TE LSP) characteristics.
+			</t>
+
+			<t>
+				<xref target='I-D.ietf-pce-gmpls-pcep-extensions'>GMPLS extensions</xref>
+				specifies a set of extensions to PCEP to enable its use in GMPLS networks.
+				It defines a set of new objects which provide introduce new variations of
+				concepts already defined in <xref target="RFC5440"/>. It then rolls up
+				message definitions on all currently known drafts and RFCs, replacing
+				their use of the non-generalized objects with the generalized ones.
+			</t>
+
+			<t>
+				This document describes an alternative approach to extending BANDWIDTH
+				concept to meet requirements set out in Section 3.4 of
+				<xref target="I-D.ietf-pce-gmpls-aps-req"/>.
+			</t>
+		</section>
+
+		<section title="Terminology">
+			<t>
+				This document uses the following terms defined in <xref target="RFC5440"/>:
+				PCC, PCE, PCEP Peer.
+			</t>
+			<t>
+				This document uses the following terms defined in <xref target="RFC2210"/>:
+				SENDER_TSPEC.
+			</t>
+
+			<t>
+				The following terms are defined in this document:
+				<list style="hanging">
+					<t hangText="Traffic Specification:">
+						A subobject which encapsulates a
+						<xref target="RFC2210">SENDER_TSPEC object</xref>.
+					</t>
+				</list>
+			</t>
+		</section>
+
+		<section anchor="Extensions" title="Protocol Procedures and Extensions">
+			<section anchor="Negotiation" title="Capability Negotiation">
+				<t>
+					During PCEP Initialization Phase, PCEP Speakers (PCE pr PCC) have to
+					negotiate the use of this extension. A PCEP speaker includes the
+					"Generalized Bandwidth Capability" TLV, described in
+					<xref target="Capability-TLV"/>. The TLV contains a set of flags, which
+					indicate the speaker's support for asymmetric bandwidth and which
+					Traffic Specification are supported by the advertizing peer.
+				</t>
+
+				<t>
+					The presence of the Generalized Bandwidth Capability TLV in
+					a speaker's OPEN Object indicates that the speaker is willing to
+					use the BANDWIDTH object definition specified in this document.
+				</t>
+
+				<t>
+					The PCEP protocol extensions for generalized bandwidth object MUST NOT
+					be used if one or both PCEP speakers have not included the Generalized
+					Bandwidth Capability TLV in its OPEN object.
+				</t>
+			</section>
+
+			<section anchor="Capability-TLV" title="Generalized Bandwidth Capability TLV">
+				<t>
+					The format of the GENERALIZED-BANDWIDTH-CAPABILITY TLV is shown in the
+					following figure:
+				</t>
+
+				<figure anchor="Capability-TLV-Fmt" title="GENERALIZED-BANDWIDTH-CAPABILITY TLV format">
+					<artwork>
+<![CDATA[
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|            Type=[TBD]         |            Length=4           |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|A|I|S|G|E|                  Reserved                           |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-++-+-+-+-+-+-+-+-+-+-++-+-+-+-+-+
+]]>
+					</artwork>
+				</figure>
+
+				<t>
+					The value comprises a single field - Flags (32 bits).
+
+					<list style="hanging">
+						<t hangText="A (ASYMMETRIC-BANDWIDTH-CAPABILITY - 1 bit):">
+							If set to 1 by a speaker, the A flag indicates, that the
+							speaker supports asymmetric bandwidth specification.
+						</t>
+
+						<t hangText="I (INTSERV-BANDWIDTH-CAPABILITY - 1 bit):">
+							If set to 1 by a speaker, the I flag indicates, that the
+							speaker supports specification of Intserv traffic specification
+							as defined by <xref target="RFC2210"/>.
+						</t> 
+
+						<t hangText="S (SONET-SDH-BANDWIDTH-CAPABILITY - 1 bit):">
+							If set to 1 by a speaker, the S flag indicates, that the
+							speaker supports specification of SONET/SDH traffic
+							specification as defined by <xref target="RFC4606"/>.
+						</t> 
+
+						<t hangText="G (G708-BANDWIDTH-CAPABILITY - 1 bit):">
+							If set to 1 by a speaker, the G flag indicates, that the
+							speaker supports specification of G.708 traffic specification
+							as defined by <xref target="RFC4328"/>.
+						</t> 
+
+						<t hangText="E (ETHERNET-BANDWIDTH-CAPABILITY - 1 bit):">
+							If set to 1 by a speaker, the E flag indicates, that the
+							speaker supports specification of Ethernet traffic
+							specification as defined by <xref target="RFC6003"/>.
+						</t> 
+					</list>
+
+					Unassigned bits are considered reserved. They MUST be set to 0 on
+					transmission and MUST be ignored on receipt.
+				</t>
+			</section>
+
+			<section anchor="BANDWIDTH-Object" title="BANDWIDTH Object">
+				<t>
+					Object header of BANDWIDTH object is kept intact in its
+					<xref target="RFC5440"/> definition. The object's length can be
+					variable. Object payload format depends on the value of
+					ASYMMETRIC-BANDWIDTH-CAPABILITY bit: if the value is 0, then the
+					<xref target="UNIDIR-BANDWIDTH-Object">unidirectional format</xref> is
+					used, otherwise the
+					<xref target="BIDIR-BANDWIDTH-Object">bidirectional format</xref> is
+					used.
+				</t>
+
+				<section anchor="UNIDIR-BANDWIDTH-Object" title="Unidirectional BANDWIDTH Object">
+					<t>
+						The Unidirectional format of BANDWIDTH object is as follows:
+					</t>
+
+					<figure anchor="BANDWIDTH-UNIDIR-OBJ-Fmt" title="Unidirectional BANDWIDTH Object format">
+						<artwork>
+<![CDATA[
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+~                   Traffic Specification                       ~
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+//                      Optional TLVs                          // 
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+]]>
+						</artwork>
+					</figure>
+
+					<t>
+						<list style="hanging">
+							<t hangText="Traffic Specification:">
+								Traffic specification in the forward direction.
+							</t>
+						</list>
+
+						Optional TLVs may be included within the object to extend the
+						information conveyed by it. The specification of such TLVs is
+						outside the scope of this document.
+					</t>
+				</section>
+
+				<section anchor="BIDIR-BANDWIDTH-Object" title="Unidirectional BANDWIDTH Object">
+					<t>
+						The Bidirectional format of BANDWIDTH object is as follows:
+					</t>
+
+					<figure anchor="BANDWIDTH-BIDIR-OBJ-Fmt" title="Bidirectional BANDWIDTH Object format">
+						<artwork>
+<![CDATA[
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+~               Forward Traffic Specification                   ~
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+~               Reverse Traffic Specification                   ~
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+//                      Optional TLVs                          // 
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+]]>
+						</artwork>
+					</figure>
+
+					<t>
+						<list style="hanging">
+							<t hangText="Forward Traffic Specification:">
+								Traffic specification along the forward direction of
+								the LSP.
+							</t>
+
+							<t hangText="Reverse Traffic Specification:">
+								Traffic specification along the reverse direction of
+								the LSP.
+							</t>
+						</list>
+
+						Optional TLVs may be included within the BANDWIDTH object body
+						to extend the information conveyed by the object. The
+						specification of such TLVs is outside the scope of this
+						document.
+
+					</t>
+				</section>
+
+			</section>
+
+			<section anchor="TRAFFIC-SPEC" title="Traffic Specification">
+				<t>
+					The format of Traffic Specification is as follows:
+
+				<figure anchor="TRAFFIC-SPEC-Fmt" title="Traffic Specification format">
+					<artwork>
+<![CDATA[
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|   SENDER_TSPEC Length         | TSpec Type    |   Reserved    |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+~                       SENDER_TSPEC                            ~
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+//                      Optional TLVs                          // 
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+]]>
+				</artwork>
+			</figure>
+
+				<list style="hanging">
+					<t hangText="SENDER_TSPEC Length:">
+						Traffic specification along the reverse direction of
+						the LSP.
+					</t>
+				</list>
+
+					Optional TLVs may be included within the BANDWIDTH object body to
+					extend the information conveyed by the object. The specification of
+					such TLVs is outside the scope of this document.
+				</t>
+			</section>
+		</section>
+
+		<section anchor="IANA-considerations" title="IANA considerations">
+			<section anchor="PCEP-Error-Object" title="PCEP-Error Object">
+				<t>This document defines new Error-Type and Error-Value for the following
+					new error conditions:
+
+					<vspace blankLines="1" /> 
+
+					<?rfc subcompact="yes"?>
+					<list style="hanging" hangIndent="13">
+
+						<t hangText=" Error-Type">Meaning</t>
+						<t hangText="    6">Mandatory Object missing
+							<list style="hanging" hangIndent="17">
+								<t hangText=" Error-value=8:">LSP cleanup TLV missing</t>
+							</list>
+						</t>
+
+						<t hangText="    19">Invalid operation
+							<list style="hanging" hangIndent="17">
+								<t hangText=" Error-value=TBD:"> PCE-initiated LSP limit reached</t>
+								<t hangText=" Error-value=TBD:"> Delegation for PCE-initiated LSP cannot be revoked</t>
+							</list>
+						</t>
+
+					</list>
+
+				</t>
+			</section>
+
+			<section anchor="PCEP-TLV-Type-Indicators" title="PCEP TLV Type Indicators">
+				<t>This document defines the following new PCEP TLVs:</t>
+
+				<texttable anchor="PCEP-New-TLV-CP" style="none" suppress-title="true">
+					<ttcol align="center" width='20%'>Value</ttcol>
+					<ttcol align="left" width='40%'>Meaning </ttcol>
+					<ttcol align="left" width='40%'>Reference </ttcol>
+					<c>???</c><c>&nbsp;LSP cleanup</c><c>This document</c>
+				</texttable>
+			</section>
+		</section> 
+
+		<section anchor="Security" title="Security Considerations">
+			<t>
+				The security considerations described in <xref target="RFC5440"></xref> 
+				apply to the extensions described in this document.
+			</t>
+		</section>
+
+		<section anchor="Acknowledgements" title="Acknowledgements">
+			<t>
+				We would like to thank Jan Medved, Ambrose Kwong and Raveendra Trovi for
+				their contributions to this document.
+			</t>
+		</section>
+
+	</middle>
+
+	<back>
+		<references title="Normative References">
+			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.2119.xml"?>
+			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.2205.xml"?>
+			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.2210.xml"?>
+			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.4328.xml"?>
+			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.4606.xml"?>
+			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5440.xml"?>
+			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.6003.xml"?>
+			<?rfc include="reference.I-D.ietf-pce-gmpls-aps-req"?>
+			<?rfc include="reference.I-D.ietf-pce-gmpls-pcep-extensions"?>
+		</references>
+
+		<references title="Informative References">
+			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5557.xml"?>
+		</references>
+	</back>
+</rfc>
