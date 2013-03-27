@@ -1,0 +1,19 @@
+- Hello capability to advertise EXI-awareness
+
+	urn:ietf:params:netconf:capability:exi:1.0
+	comments={true,false}
+		EXI Preserve.comments
+	dtd={true,false}
+		EXI Preserve.dtd
+	lexicalValues={true,false}
+		EXI Preserve.lexicalValues
+	pis={true,false}
+		EXI Preserve.pis
+	prefixes={true,false}
+		EXI Preserve.prefixes
+	dynamicSchema={true,false}
+		Supports dynamic schema learning
+
+- Each end advertises its statically-supported schemas. These may always be
+  used to perform schema-assisted EXI compression
+
