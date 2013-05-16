@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <!DOCTYPE rfc SYSTEM "rfc2629.dtd">
+<!-- vi: set smarttab sw=2 tabstop=4: -->
 <?rfc toc="yes"?>
 <?rfc tocompact="yes"?>
 <?rfc tocdepth="3"?>
@@ -117,6 +118,9 @@
       target="RFC5440"/>: PCC, PCE, PCEP Peer.</t>
 
       <t>This document uses the following terms defined in <xref
+      target="RFC4655"/>: TED.</t>
+
+      <t>This document uses the following terms defined in <xref
       target="RFC4090"/>: MPLS TE Fast Reroute (FRR), FRR One-to-One Backup,
       FRR Facility Backup.</t>
 
@@ -199,7 +203,7 @@
 	  target="RFC3209"/> information about network resources utilization is
 	  only available as total reserved capacity by traffic class on a per
 	  interface basis; individual LSP state is available only locally on
-	  each LER for it's own LSPs. In most cases, this makes good sense, as
+	  each LER for its own LSPs. In most cases, this makes good sense, as
 	  distribution and retention of total LSP state for all LERs within in
 	  the network would be prohibitively costly.</t>
 	  
@@ -232,7 +236,7 @@
 	    <t>Any reliable synchronization mechanism would result in
 	    significant control plane overhead</t>
 
-	    <t>Out-of-band ted synchronization would be complex and prone to
+	    <t>Out-of-band TED synchronization would be complex and prone to
 	    race conditions</t>
 
 	    <t>Path calculations incorporating total network state would be
@@ -1117,8 +1121,8 @@
 	indicated that they support LSP Update, then the PCC may choose to grant
 	the PCE a temporary right to update (a subset of) LSP attributes on one
 	or more LSPs. This is called "LSP Delegation", and it MAY be performed
-	at any time after the Initialization phase, including during the Synchronization
-	phase.</t>
+	at any time after the Initialization phase, including during the State
+	Synchronization phase.</t>
 	
 	<t>LSP Delegation is controlled by operator-defined policies on a PCC.
 	LSPs are delegated individually - different LSPs may be delegated to
@@ -1136,8 +1140,8 @@
 	
 	<t> In the event of an delegation being rejected or returned by a PCE, the 
 	PCC should react based on local policy. 
-	It could either retry delegating to the same PCE using an exponentially 
-	increasing timer or delegate to an alternate PCE. </t> 
+	It can, for example, either retry delegating to the same PCE using an
+	exponentially increasing timer or delegate to an alternate PCE. </t> 
 
 	<section anchor="LSP-DELEGATION" title="Delegating an LSP">
 	  <t>A PCC delegates an LSP to a PCE by setting the Delegate flag in LSP
@@ -1219,7 +1223,7 @@
 	  revoking LSP delegations to the PCE.  If a new PCEP session with the
 	  PCE can be established before the 'Delegation Timeout' timer expires,
 	  LSP delegations to the PCE remain intact.  If, after expiry of the
-	  'Delegation Timeout' timer, a PCC can not delegate an LSP to another
+	  'Delegation Timeout' timer, a PCC cannot delegate an LSP to another
 	  PCE (for example, if a PCC is not connected to any active stateful PCE
 	  or if no connected active stateful PCE accepts the delegation), the
 	  PCC SHALL flush any LSP state set by the PCE.</t>
@@ -1254,7 +1258,7 @@
 	     ]]></artwork>
 	  </figure>
 
-	  <t>If a PCC can not delegate an LSP to a PCE (for example, if a PCC is
+	  <t>If a PCC cannot delegate an LSP to a PCE (for example, if a PCC is
 	  not connected to any active stateful PCE or if no connected active
 	  stateful PCE accepts the delegation), the LSP delegation on the PCC
 	  will time out within a configurable Delegation Timeout Interval and
@@ -1523,7 +1527,7 @@ Where:
 	<t>A Path Computation LSP Update Request message (also referred to as
 	PCUpd message) is a PCEP message sent by a PCE to a PCC to update
 	attributes of an LSP. A PCUpd message can carry more than one LSP Update
-	Request. The Message-Type field of the PCEP common header for the PCRpt
+	Request. The Message-Type field of the PCEP common header for the PCUpd
 	message is set to [TBD].</t>
 
 	<t>The format of a PCUpd message is as follows:</t>
@@ -1599,7 +1603,7 @@ Where:
 	new state via a PCRpt) before attempting
 	to apply the changes indicated in the second PCupd. </t>
 	
-	<t>Note also that it's up to the PCE to handle inter-LSP dependencies;
+	<t>Note also that it is up to the PCE to handle inter-LSP dependencies;
 	for example, if ordering of LSP set-ups is required, the PCE has to wait
 	for an LSP State Report for a previous LSP before starting the update of 
 	the next LSP. If the PCUpd cannot be satisfied (for example due to
@@ -1856,7 +1860,7 @@ Where:
        session. The mapping of the Symbolic Path Name to PLSP-ID is communicated
        to the PCE by sending a PCRpt message containing the SYMBOLIC-PATH-NAME 
        TLV. All subsequent PCEP messages then address the LSP by the PLSP-ID. The 
-	   values of 0 and 0xFFFF are reserved. </t>
+	   values of 0 and 0xFFFFF are reserved.</t>
 
        <t>Flags (12 bits):
        <list style="hanging">
