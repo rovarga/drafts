@@ -10,7 +10,7 @@
 <?rfc inline="yes"?>
 <?rfc compact="yes"?>
 <?rfc subcompact="no"?>
-<rfc category="std" docName="draft-ietf-pce-stateful-pce-03" ipr="trust200902">
+<rfc category="std" docName="draft-ietf-pce-stateful-pce-05" ipr="trust200902">
   <front>
     <title abbrev="PCEP Extensions for Stateful PCE">
     PCEP Extensions for Stateful PCE</title>
@@ -69,7 +69,7 @@
 	<email>robert.varga@pantheon.sk</email>
       </address>
     </author>
-    <date day="22" month="March" year="2013" />
+    <date day="14" month="May" year="2013" />
 
     <workgroup>Network Working Group</workgroup>
 
@@ -169,20 +169,6 @@
 	a specific source being completely isolated from specific destination.
 	The summed capacity of these links is equivalent to the maximum capacity
 	from the source to the destination by the max-flow min-cut theorem.</t>
-
-	<t hangText="MPLS TE Global Default Restoration:"> once an LSP failure
-	is detected by some downstream mode, the head-end LSP is notified by
-	means of RSVP. Upon receiving the notification, the headend Label
-	Switching Router (LSR) recomputes the path and signals the LSP along an
-	alternate path. <xref target="NET-REC"/></t>
-
-	<t hangText="MPLS TE Global Path Protection:"> once an LSP failure is
-	detected by some downstream mode, the head-end LSP is notified by means
-	of RSVP.  Upon receiving the notification, the headend LSR reroutes
-	traffic using a pre-signaled backup (secondary) LSP. <xref
-	target="NET-REC"/>.</t>
-
-
       </list>
       </t>
 
@@ -220,8 +206,7 @@
 	  <t>Unfortunately, this visibility in terms of global LSP state
 	  may result in a number of issues for some demand patterns,
 	  particularly within a common setup and hold priority. This issue
-	  affects online traffic engineering systems, and in particular, the
-	  widely implemented but seldom deployed auto-bandwidth system.</t>
+	  affects online traffic engineering systems.</t>
 	  	  
 	  <t>A sufficiently over-provisioned system will by definition have no
 	  issues routing its demand on the shortest path. However, lowering the
@@ -678,9 +663,6 @@
 	  <t>Allow a PCE to control computation timing and update timing across
 	  all LSPs that have been delegated to it.</t>
 
-	  <t>Allow a PCE to specify protection / restoration settings for all
-	  LSPs that have been delegated to it.</t>
-
 	  <t>Enable uninterrupted operation of PCC's LSPs in the event PCE
 	  failure or while control of LSPs is being transferred between
 	  PCEs.</t>
@@ -851,7 +833,7 @@
 	<t> The end of synchronization  marker is a PCRpt message with the 
 	SYNC Flag set to 0 for an LSP Object with PLSP-ID equal to the 
 	reserved value 0. The
-	LSP Object does not include the Symbolic Path name TLV in this case.  
+	LSP Object does not include the SYMBOLIC-PATH-NAME TLV in this case.  
 	</t> 
 	
 	<t>A PCE SHOULD NOT send PCUpd messages to a PCC before State
@@ -896,8 +878,9 @@
                     |            .           |
                     |                        |
                     |-----PCRpt, SYNC=0----->| (End of sync marker
-                    |                        |  LSP State Report 
-					                            for PLSP-ID 0)
+                    |                        |  LSP State Report
+                    |                        |  for PLSP-ID=0)
+                                                
 	    ]]></artwork>
 	</figure>
 
@@ -955,15 +938,24 @@
 	  period prior to session re-initialization. To be able to make this
 	  determination, state must be exchanged and maintained by both PCE and
 	  PCC during normal operation. This is accomplished by keeping track of
-	  the changes to the LSP State Database. When State Synchronization
-	  avoidance is enabled on a PCEP session, a PCC includes the LSP-DB-VERSION
-	  TLV as an optional TLV in the LSP Object on each LSP State Report. 
-	  The LSP-DB-VERSION TLV contains a PCC's LSP State Database version, which
-	  is incremented each time a change is made to the PCC's local LSP State
-	  Database. The LSP State Database version is an unsigned 64-bit value
+	  the changes to the LSP State Database, using a database version called 
+	  the LSP State Database Version.</t>
+	  
+	  <t> The LSP State Database version is an unsigned 64-bit value
 	  that MUST be incremented by 1 for each successive change in the LSP
 	  state database. The LSP State Database version MUST start at 1 and
-	  may wrap around. Values 0 and 0xFFFFFFFFFFFFFFFF are reserved.</t>
+	  may wrap around. Values 0 and 0xFFFFFFFFFFFFFFFF are reserved. The PCC is 
+	  the owner of the LSP State Database version, which is incremented each time
+	  a change is made to the PCC's local LSP State
+	  Database. Operations that trigger a change to the local LSP State 
+	  database include a change in the LSP operational state, delegation of an
+	  LSP, removal or addition of an LSP or change in any of the LSP attributes that
+	  would trigger a report to the PCE. 
+	  When State Synchronization
+	  avoidance is enabled on a PCEP session, a PCC includes the LSP-DB-VERSION
+	  TLV as an optional TLV in the LSP Object on each LSP State Report. 
+	  The LSP-DB-VERSION TLV contains a PCC's LSP State Database version. </t>
+	  
 
 	  <t>State Synchronization Avoidance is negotiated on a PCEP session
 	  during session startup. To make sure that a PCEP peer can recognize a
@@ -982,7 +974,7 @@
 	  session. If a PCC's LSP State Database survived the restart, the PCC
 	  will include the LSP-DB-VERSION TLV in its OPEN object and the TLV
 	  will contain the last LSP State Database version sent on an LSP State
-	  Update from the PCC in the previous PCEP session. If a PCEP Speaker's
+	  Report from the PCC in the previous PCEP session. If a PCEP Speaker's
 	  LSP State Database did not survive the restart of a PCEP session, the
 	  PCEP Speaker MUST NOT include the LSP-DB-VERSION TLV in the OPEN
 	  Object.</t>
@@ -997,7 +989,19 @@
 	  close the PCEP session.</t>
 	  
 	  <t> 
-	  If state synchronization is required, then after the Initialization phase has completed, the PCE MUST mark any LSPs in the LSP database that were previously reported by the PCC as stale.  When the PCC reports an LSP during state synchronization, if the LSP already exists in the LSP database, the PCE MUST update the LSP database and clear the stale marker from the LSP.  When it has finished state synchronization, the PCC MUST immediately send a PCRpt message containing a state-report with an LSP object containing an PLSP-ID of 0 and with the SYNC flag set to 0 (see <xref target="Synchronization" />).  This state-report indicates to the PCE that state synchronization has completed.  On receiving this state-report, the PCE MUST purge any LSPs from the LSP database that are still marked as stale.
+	  If state synchronization is required, then after the Initialization 
+	  phase has completed, the PCE MUST mark any LSPs in the LSP database 
+	  that were previously reported by the PCC as stale. 
+	  When the PCC reports an LSP during state synchronization, 
+	  if the LSP already exists in the LSP database, the PCE MUST update 
+	  the LSP database and clear the stale marker from the LSP. 
+	  When it has finished state synchronization, the PCC MUST 
+	  immediately send a PCRpt message containing a state report with an 
+	  LSP object containing an PLSP-ID of 0 and with the SYNC flag set to 
+	  0 (see <xref target="Synchronization" />). This state report 
+	  indicates to the PCE that state synchronization has completed. 
+	  On receiving this state report, the PCE MUST purge any LSPs from 
+	  the LSP database that are still marked as stale.
 	  </t>
 
 	  <t>Note that a PCE MAY force State Synchronization by not including
@@ -1099,7 +1103,7 @@
                     |------PCRpt,SYNC=0----->| (Regular
                     |                        |  LSP State Report)
                     |------PCRpt,SYNC=0----->| (Regular
-                    |                        |  LSP State Update)
+                    |                        |  LSP State Report)
                     |------PCRpt,SYNC=0----->|
                     |                        |
 	    ]]></artwork>
@@ -1177,10 +1181,10 @@
 	  LSP, it revokes that LSP's delegation to the PCE.  A PCC may revoke an
 	  LSP delegation at any time during the LSP's life time.  A PCC revoking
 	  an LSP delegation MAY immediately clear the LSP state provided by the PCE.
-	  If the PCC has received but not yet acted on PCupd messages from the PCE for
-	  the LSP whose delegation is being revoked, then it SHOULD ignore these PCupd 
-	  messages when processing the message queue. Any further PCupd messages are
-	  handled according to the PCupd procedures described in this document.</t>
+	  If the PCC has received but not yet acted on PCUpd messages from the PCE for
+	  the LSP whose delegation is being revoked, then it SHOULD ignore these PCUpd 
+	  messages when processing the message queue. Any further PCUpd messages are
+	  handled according to the PCUpd procedures described in this document.</t>
 
 	  <t>If a PCEP session with the PCE to which the LSP is delegated exists
 	  in the UP state during the revocation, the PCC MUST notify that PCE by
@@ -1260,11 +1264,14 @@
 	<section anchor="Redundant-PCEs" title="Redundant Stateful PCEs">
 	  <t>Note that a PCE may not have any delegated LSPs: in a redundant
 	  configuration where one PCE is backing up another PCE, the backup PCE
-	  will not have any delegated LSPs. The backup PCE does not update any
-	  LSPs, but it receives all LSP State Reports from a PCC. When the
-	  primary PCE fails, after expiry of the delegation timeout,
-	  a PCC will delegate to the secondary PCE all LSPs
-	  that had been previously delegated to the failed PCE.</t>
+	  may have only a subset of LSPs delegated to it.  The backup PCE does 
+	  not update any LSPs that are not delegated to it, but receives all 
+	  LSP State Reports from a PCC.  When the primary PCE for a given LSP 
+	  set fails, after expiry of the delegation timeout, that PCC will
+	  delegate to the redundant PCE all LSPs that had been previously delegated 
+	  to the failed PCE.
+	  </t>
+	  
 	</section>
 
       </section>
@@ -1383,9 +1390,12 @@
 
 	  <t>A PCE sends an LSP Update Request carried on a PCUpd message to the
 	  PCC. The LSP Update Request contains a variety of objects that specify
-	  the set of constraints and attributes for the LSP's path.
-	  Additionally, the PCC may specify the urgency of such request by
-	  assigning a request priority. A single PCUpd message MAY contain
+	  the set of constraints and attributes for the LSP's path. Each 
+	  LSP Update Request has a unique identifier, the SRP-ID-number, 
+	  carried in the SRP (Stateful PCE Request Parameters) Object 
+	  described in <xref target="SRP-Object-Format"/>. 
+	  The SRP-ID-number is used to correlate errors and state reports to 
+	  LSP Update Requests. A single PCUpd message MAY contain
 	  multiple LSP Update Requests.</t>
 	  
 	  <t>Upon receiving a PCUpd message the PCC starts to setup LSPs
@@ -1393,18 +1403,28 @@
 	  it sends an LSP State Report carried on a PCRpt message to the PCE,
 	  indicating that the LSP's status is 'Pending'.If the PCC decides that
 	  the LSP parameters proposed in the PCUpd message are unacceptable, it 
-	  SHOULD revoke the delegation.
+	  MUST report this error by including the 
+	  LSP-ERROR-CODE TLV (<xref target="LSP-err-code-tlv"/>) with LSP error 
+	  value="Unacceptable PCupd parameters" in the LSP object in the PCRpt message to the 
+	  PCE. It MAY react further to this error by revoking the delegation. 
 	  </t>
 
 	  <t>Once an LSP is up, the PCC sends an LSP State Report (PCRpt
 	  message) to the PCE, indicating that the LSP's status is 'Up'. If the
 	  LSP could not be set up, the PCC sends an LSP State Report indicating
 	  that the LSP is 'Down' and stating the cause of the failure. A PCC may
-	  choose to compress LSP State Updates to only reflect the most up to
+	  choose to compress LSP State Reports to only reflect the most up to
 	  date state, as discussed in the previous section.</t>
 
 	  <t>A PCC sends each LSP State Report to each stateful PCE that is
 	  connected to the PCC.</t>
+	  
+	  <t> PCErr and PCRpt messages triggered as a result of a PCupd message MUST 
+	  include the SRP-ID-number from the PCUpd. This provides correlation 
+	  of requests and errors and 
+	  acknowledgement of state processing.  The PCC may choose to compress
+	  state when processing PCupd. In this case, receipt of a higher SRP-ID-number implicitly
+	  acknowledges processing all the earlier updates for the specific LSP. </t> 
 
 	  <t>A PCC MUST NOT send to any PCE a Path Computation Request for a
 	  delegated LSP. Should the PCC decide it wants to issue a Path
@@ -1459,7 +1479,8 @@ Where:
 
    <state-report-list> ::= <state-report>[<state-report-list>]
 
-   <state-report> ::= <LSP>
+   <state-report> ::= <SRP> 
+					  <LSP>
                       [<path-list>]
 
 Where:
@@ -1471,11 +1492,27 @@ Where:
 	  ]]></artwork>
 	</figure>
 	
+	<t>The SRP object (see <xref target="SRP-Object-Format"/>) is mandatory,
+	and it MUST be included for each LSP State Report in the PCRpt message. 
+	The value of the SRP-ID-number in the SRP Object MUST be the same as that
+	sent in the PCUpd message
+	that triggered the state that is reported, or the reserved value 0x00000000 if 
+	the state is not as a result of processing a PCUpd message. If the PCC 
+	compressed several PCupd messages for the same LSP by only processing the latest one, 
+	then it should use the SRP-ID-number of that request. 
+	If the SRP object is missing, the receiving PCE MUST send a PCErr
+	message with Error-type=6 (Mandatory Object missing) and
+	Error-value=[TBD] (SRP object missing).</t>
+	
 	<t>The LSP object (see <xref target="LSP-Object-Format"/>) is mandatory,
 	and it MUST be included in each LSP State Report on the PCRpt message.
 	If the LSP object is missing, the receiving PCE MUST send a PCErr
 	message with Error-type=6 (Mandatory Object missing) and
 	Error-value=[TBD] (LSP object missing).</t>
+	
+	<t> If the LSP transitioned to non-operational state, the PCC SHOULD include 
+	the LSP-ERROR-TLV (<xref target="LSP-err-code-tlv"/>) with the relevant 
+	LSP Error Code to report the error to the PCE. </t> 
 	
 	<t> The path descriptor is described in separate technology-specific
 	documents according to the LSP type. </t>
@@ -1498,7 +1535,8 @@ Where:
 
    <update-request-list> ::= <update-request>[<update-request-list>]
 
-   <update-request> ::= <LSP>
+   <update-request> ::= <SRP>
+                        <LSP>
                         [<path-list>]
 
 Where:
@@ -1509,45 +1547,77 @@ Where:
 	  ]]></artwork>
 	</figure>
   
-	<t>There is one mandatory object that MUST be included within each LSP
-	Update Request in the PCUpd message: the LSP object (see <xref
-	target="LSP-Object-Format"/>). If the LSP object is missing, the
+	<t>There are two mandatory objects that MUST be included within each LSP
+	Update Request in the PCUpd message: the SRP Object (see 
+	<xref target="SRP-Object-Format"/>) and the LSP object (see <xref
+	target="LSP-Object-Format"/>). If the SRP object is missing, the
 	receiving PCE MUST send a PCErr message with Error-type=6 (Mandatory
-	Object missing) and Error-value=[TBD] (LSP object missing).
+	Object missing) and Error-value=[TBD] (SRP object missing). If the LSP object is missing, the
+	receiving PCE MUST send a PCErr message with Error-type=6 (Mandatory
+	Object missing) and Error-value=[TBD] (LSP object missing)
 	</t>
-
 
 	<t>A PCC only acts on an LSP Update Request if permitted by the local 
 	policy configured by the network manager.  Each LSP Update Request 
 	that the PCC acts on results in an LSP setup operation.
-	An LSP Update Request MUST contain all LSP parameters that a PCC
+	An LSP Update Request MUST contain all LSP parameters that a PCE
 	wishes to set for the LSP. A PCC MAY set missing parameters from locally
 	configured defaults. If the LSP specified in the Update Request is already
-	up, it will be re-signaled. The PCC will use make-before-break whenever
-	possible in the re-signaling operation.</t>
+	up, it will be re-signaled. </t>
+	
+	<t> The PCC SHOULD use the make-before-break procedures described in 
+	<xref target="RFC3209"/> in the re-signaling operation. When traffic 
+	switchover to the updated path and teardown of the old path are under 
+	the control of PCC, no extensions are necessary. The PCC MUST send a 
+	PCrpt message with the new path attributes to the PCE only after traffic 
+	has been switched over. In some situations, it may be desirable for 
+	the PCE to control the timing of traffic switchover. This mode of 
+	operation and the extensions necessary to support it are left 
+	for further study. In either case, resignaling of the path, label allocation, 
+	and RSVP id allocations are under the control of the PCC. </t>
 	
 	<t>A PCC MUST respond with an LSP State Report to each LSP Update
-	Request to indicate the resulting state of the LSP in the network. A PCC
+	Request it processed to indicate the resulting state of the LSP in the network 
+	(even if this processing did not result in changing the state of the LSP). 
+	The SRP-ID-number included in the PCRpt MUST match that in the PCupd. A PCC
 	MAY respond with multiple LSP State Reports to report LSP setup
-	progress of a single LSP.</t>
-
-	<t>If the rate of PCUpd messages sent to a PCC for the same target LSP
-	exceeds the rate at which the PCC can signal LSPs into the network, the
-	PCC MAY perform state compression and only re-signal the last
-	modification in its queue. </t>
+	progress of a single LSP. In that case, the SRP-ID-number MUST be included while the 
+	state of the LSP is "pending", afterwards the reserved value 0x00000000 SHOULD be used..</t>
 
 	<t>Note that a PCC MUST process all LSP Update Requests - for example,
 	an LSP Update Request is sent when a PCE returns delegation or puts an
 	LSP into non-operational state. The protocol relies on TCP for
 	message-level flow control.</t>
 
+	<t>If the rate of PCUpd messages sent to a PCC for the same target LSP
+	exceeds the rate at which the PCC can signal LSPs into the network, the
+	PCC MAY perform state compression and only signal the last
+	modification in its queue, as the last PCupd contains the most up-to-date desired
+	state for the LSP. If two PCupd arrive for the same LSP in quick
+	succession and the PCC started the signaling of the changes relevant to the 
+	first PCupd, then it MUST wait until the signaling finishes (and report the 
+	new state via a PCRpt) before attempting
+	to apply the changes indicated in the second PCupd. </t>
+	
 	<t>Note also that it's up to the PCE to handle inter-LSP dependencies;
 	for example, if ordering of LSP set-ups is required, the PCE has to wait
 	for an LSP State Report for a previous LSP before starting the update of 
 	the next LSP. If the PCUpd cannot be satisfied (for example due to
 	unsupported object or TLV), the PCC MUST respond with an PCErr message</t>
+
     </section>
 
+	
+	
+	<section anchor="PCerr" title="The PCErr Message"> 
+	<t> If the stateful PCE capability has been negotiated on the PCEP 
+	session, the PCErr message 
+	MUST include the SRP object. If the error reported is the result of 
+	an LSP update request, then the SRP-ID-number MUST be the one from 
+    the PCupd that triggered the error. 
+	If it is unsolicited, the SRP-ID-number MUST be the reserved value 0x00000000.</t> 
+	</section> 
+	
     <section anchor="PCReq" title="The PCReq Message">
 	<t>A PCC MAY include the LSP object in the PCReq message (see <xref
 	target="LSP-Object-Format"/>) if stateful PCE capability has been
@@ -1555,7 +1625,7 @@ Where:
 	the PCReq message are described in technology-specific documents for MPLS and 
 	GMPLS.</t>
 	</section>
-
+	
     <section anchor="PCRep" title="The PCRep Message">
 	<t>A PCE MAY include the LSP object in the PCRep message (see (<xref
 	target="LSP-Object-Format"/>) if stateful PCE capability has been
@@ -1576,12 +1646,13 @@ Where:
      exclusively related to path computation requests.</t>
 
      <section anchor="Open-Object-Format" title="OPEN Object">
-       <t>This document defines a new optional TLV for the OPEN Object to
-       support stateful PCE capability negotiation.</t>
+       <t>This document defines two new optional TLVs for use in the OPEN 
+	   Object.</t>
 
        <section anchor="Capability-TLV" title="Stateful PCE Capability TLV">
-	 <t>The format of the STATEFUL-PCE-CAPABILITY TLV is shown in the
-	 following figure:</t>
+	 <t>The STATEFUL-PCE-CAPABILITY TLV is an optional TLV for use in the OPEN
+	 Object for stateful PCE capability negotiation. Its format 
+	 is shown in the following figure:</t>
 
 	 <figure anchor="Capability-TLV-Fmt" title="STATEFUL-PCE-CAPABILITY TLV format">
 	   <artwork><![CDATA[
@@ -1604,7 +1675,7 @@ Where:
 	   <t hangText="U (LSP-UPDATE-CAPABILITY - 1 bit):">if set to 1 by a
 	   PCC, the U Flag indicates that the PCC allows modification of LSP
 	   parameters; if set to 1 by a PCE, the U Flag indicates that the PCE
-	   wishes to update LSP parameters. The LSP-UPDATE-CAPABILITY Flag must
+	   is capable of updating LSP parameters. The LSP-UPDATE-CAPABILITY Flag must
 	   be advertised by both a PCC and a PCE for PCUpd messages to be
 	   allowed on a PCEP session.</t>
 
@@ -1660,7 +1731,6 @@ Where:
 	 the PCEP Speaker. It identifies the PCEP Speaker to its peers if the
 	 Speaker's IP address changed.</t>
 	 
-	 <t> ### Need to add text on redundancy groups </t> 
 
 	 <t>The format of the  PREDUNDANCY-GROUP-ID TLV is shown in the following
 	 figure:</t>
@@ -1688,6 +1758,66 @@ Where:
        </section>
 
      </section>
+	 
+	 <section anchor="SRP-Object-Format" title="SRP Object">
+	 
+	 <t> The SRP (Stateful PCE Request Parameters) object MUST be 
+	 carried within each PCUpd and PCRpt message and MAY be carried 
+	 within PCNtf and PCEerr messages. The SRP object is used to correlate
+	 between update requests sent by the PCE and the error reports and state
+	 reports sent by the PCC. The P flag of the SRP object MUST be set to 0 and 
+	 SHOULD be ignored on receipt.</t> 
+	 
+	   <t>SRP Object-Class is [TBD].</t>
+
+       <t>SRP Object-Type is 1.</t>
+       
+       <t>The format of the SRP object body is shown in <xref
+       target="SRP-Object-Fmt"/>:</t>
+
+       <figure anchor="SRP-Object-Fmt" title="The SRP Object format">
+	 <artwork><![CDATA[
+	   0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                          Flags                                |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                        SRP-ID-number                          |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                                                               |
+   //                      Optional TLVs                          //
+   |                                                               |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+	 ]]></artwork>
+       </figure>
+
+       <t>The SRP object body has a variable length and may contain additional
+       TLVs. The SYMBOLIC-PATH-NAME TLV MAY be included as one of the optional 
+	   TLVs.</t>
+	   
+	   <t>Flags (32 bits): None defined yet. </t>
+	   
+	   <t>SRP-ID-number (32 bits): The SRP-ID-number value combined
+       with the source IP address of the PCC and the PCE uniquely
+       identify the operation that the PCE has requested the PCC to perform
+	   on a given LSP.  The SRP-ID-number is incremented each time a
+       new request is sent to the PCC, and may wrap around.</t>
+
+       <t> The values 0x00000000 and 0xFFFFFFFF are reserved. </t> 
+	   
+	   <t> Every request to update an LSP receives a new SRP-ID-number. This number is 
+	   unique per PCEP session and is incremented each time an operation is requested 
+	   from the PCE. Thus, for a given LSP there may be more than one SRP-id-number unacknowledged at
+	   a given time. The value of the SRP-ID-number is echoed back by the PCC in PCErr and 
+	   PCRpt messages to allow for correlation between requests made by the PCE and errors or 
+	   state reports generated by the PCC. If the error or report were not as a result of a 
+	   PCE operation (for example in the case of a link down event), then the reserved value of 
+	   0x00000000 is used instead. An SRP-ID-number is considered unacknowledged and cannot
+	   be reused until a PCErr or PCRpt arrives with an SRP-ID-number equal or higher for 
+	   the same LSP. A PCrpt with state "Pending" is not considered as an acknowledgement. </t> 
+
+	 </section>
 
      <section anchor="LSP-Object-Format" title="LSP Object">
        <t>The LSP object MUST be present within PCRpt and PCUpd messages. The
@@ -1709,7 +1839,7 @@ Where:
    0                   1                   2                   3
    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-  |                PLSP-ID                |     Flags     |R|O|S|D|
+  |                PLSP-ID                |     Flags       |R|S|D|
   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
   |                                                               |
   //                        Optional TLVs                        //
@@ -1724,7 +1854,7 @@ Where:
        <t>PLSP-ID (20 bits): An identifier for the LSP. A PCC creates a unique
        PLSP-ID for each LSP that is constant for the life time of a PCEP
        session. The mapping of the Symbolic Path Name to PLSP-ID is communicated
-       to the PCE by sending a PCRpt message containing the 'Symbolic Path Name'
+       to the PCE by sending a PCRpt message containing the SYMBOLIC-PATH-NAME 
        TLV. All subsequent PCEP messages then address the LSP by the PLSP-ID. The 
 	   values of 0 and 0xFFFF are reserved. </t>
 
@@ -1744,18 +1874,6 @@ Where:
 	 LSP State Report sent from a PCC during State Synchronization. The S
 	 Flag MUST be set to 0 otherwise. </t>
 
-	 <t hangText="O (Operational - 1 bit):"> On PCRpt messages the O Flag
-	 indicates the LSP status. Value of '1' means that the LSP is
-	 operational, i.e. it is either being signaled or it is active. Value of
-	 '0' means that the LSP is not operational, i.e it is de-routed and the
-	 PCC is not attempting to set it up. On PCUpd messages the flag
-	 indicates the desired status for the LSP. Value of '1' means that the
-	 desired LSP state is operational, value of '0' means that the target
-	 LSP should be non-operational. Setting the LSP status from the PCE
-	 SHALL NOT override the operator: if a pce-controlled LSP has been
-	 configured to be non-operational, setting the LSP's status to '1' from
-	 an PCE will not make it operational. </t>
-
 	 <t hangText="R (Remove - 1 bit):"> On PCRpt messages the R Flag
 	 indicates that the LSP has been removed from the PCC. Upon receiving an
 	 LSP State Report with the R Flag set to 1, the PCE SHOULD remove all
@@ -1769,7 +1887,123 @@ Where:
        <t> TLVs that may be included in the LSP Object are described in
        the following sections and in separate technology-specific documents. </t>
 
-       <section anchor="LSP-Symb-Name-TLV" title="Symbolic Path Name TLV">
+<section anchor="LSP-Identifiers-TLVs" title="LSP Identifiers TLVs">
+
+	 <t>Whenever the value of an LSP identifier changes, a PCC MUST send out
+	 an LSP State Report, where the LSP Object carries the LSP Identifiers
+	 TLV that contains the new value. The LSP Identifiers TLV MUST also be
+	 included in the LSP object during state synchronization. There are two
+	 LSP Identifiers TLVs, one for IPv4 and one for IPv6.</t>
+
+	 <t>The format of the IPV4-LSP-IDENTIFIERS TLV is shown in the following
+	 figure:</t>
+
+ 	 <figure anchor="v4LSP-ID-TLV-Fmt" title="IPV4-LSP-IDENTIFIERS TLV format">
+	   <artwork><![CDATA[
+   0                   1                   2                   3
+   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |           Type=[TBD]          |           Length=12           |
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |                   IPv4 Tunnel Sender Address                  |
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |             LSP ID            |           Tunnel ID           |
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |                        Extended Tunnel ID                     |
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	  ]]></artwork>
+	 </figure>
+
+	 <t>The type of the TLV is [TBD] and it has a fixed length of 12 octets.
+	 The value contains the following fields:
+
+	 <list style="hanging">
+	   <t hangText="IPv4 Tunnel Sender Address:"> contains the
+	   sender node's IPv4 address, as defined in <xref
+	   target="RFC3209"/>, Section 4.6.2.1 for the LSP_TUNNEL_IPv4
+	   Sender Template Object.</t>
+
+	   <t hangText="LSP ID:"> contains the 16-bit 'LSP ID' identifier
+	   defined in <xref target="RFC3209"/>, Section 4.6.2.1 for the
+	   LSP_TUNNEL_IPv4 Sender Template Object.</t>
+
+	   <t hangText="Tunnel ID:"> contains the 16-bit 'Tunnel ID' identifier
+	   defined in <xref target="RFC3209"/>, Section 4.6.1.1 for the
+	   LSP_TUNNEL_IPv4 Session Object. Tunnel ID remains constant over the
+	   life time of a tunnel. However, when Global Path Protection or Global
+	   Default Restoration is used, both the primary and secondary LSPs have
+	   their own Tunnel IDs. A PCC will report a change in Tunnel ID when
+	   traffic switches over from primary LSP to secondary LSP (or vice
+	   versa).</t>
+
+	   <t hangText="Extended Tunnel ID:"> contains the 32-bit 'Extended
+	   Tunnel ID' identifier defined in <xref target="RFC3209"/>, Section
+	   4.6.1.1 for the LSP_TUNNEL_IPv4 Session Object.</t>
+	 </list>
+	 </t>
+
+	 <t>The format of the IPV6-LSP-IDENTIFIERS TLV is shown in l following
+	 figure:</t>
+
+ 	 <figure anchor="v6LSP-ID-TLV-Fmt" title="IPV6-LSP-IDENTIFIERS TLV format">
+	   <artwork><![CDATA[
+   0                   1                   2                   3
+   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |           Type=[TBD]          |           Length=36           |
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |                                                               |
+  +                                                               +
+  |                  IPv6 tunnel sender address                   |
+  +                          (16 octets)                          +
+  |                                                               |
+  +                                                               +
+  |                                                               |
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |             LSP ID            |           Tunnel ID           |
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |                                                               |
+  +                                                               +
+  |                       Extended Tunnel ID                      |
+  +                          (16 octets)                          +
+  |                                                               |
+  +                                                               +
+  |                                                               |
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	  ]]></artwork>
+	 </figure>
+
+	 <t>The type of the TLV is [TBD] and it has a fixed length of 36 octets.
+	 The value contains the following fields:
+
+	 <list style="hanging">
+	   <t hangText="IPv6 Tunnel Sender Address:"> contains the
+	   sender node's IPv6 address, as defined in <xref
+	   target="RFC3209"/>, Section 4.6.2.2 for the LSP_TUNNEL_IPv6
+	   Sender Template Object.</t>
+
+	   <t hangText="LSP ID:"> contains the 16-bit 'LSP ID' identifier
+	   defined in <xref target="RFC3209"/>, Section 4.6.2.2 for the
+	  LSP_TUNNEL_IPv6 Sender Template Object.</t>
+
+	   <t hangText="Tunnel ID:"> contains the 16-bit 'Tunnel ID' identifier
+	   defined in <xref target="RFC3209"/>, Section 4.6.1.2 for the
+	   LSP_TUNNEL_IPv6 Session Object. Tunnel ID remains constant over the
+	   life time of a tunnel. However, when Global Path Protection or Global
+	   Default Restoration is used, both the primary and secondary LSPs have
+	   their own Tunnel IDs. A PCC will report a change in Tunnel ID when
+	   traffic switches over from primary LSP to secondary LSP (or vice
+	   versa).</t>
+
+	   <t hangText="Extended Tunnel ID:"> contains the 128-bit 'Extended
+	   Tunnel ID' identifier defined in <xref target="RFC3209"/>, Section
+	   4.6.1.2 for the LSP_TUNNEL_IPv6 Session Object.</t>
+	 </list>
+	 </t>
+       </section>
+
+	  
+	  <section anchor="LSP-Symb-Name-TLV" title="Symbolic Path Name TLV">
 	
 	 <t> Each LSP (path) MUST have a symbolic name that is unique in the
 	 PCC. This symbolic path name MUST remain constant throughout a path's
@@ -1810,60 +2044,86 @@ Where:
 
        </section>
 
-       
-       <section anchor="ERROR_SPEC" title="RSVP ERROR_SPEC TLVs">
+	     <section anchor="LSP-err-code-tlv" title="LSP Error Code TLV">
 	 
-	 <t>If the set up of an LSP failed at a downstream node which returned
-	 an ERROR_SPEC to the PCC, the ERROR_SPEC MUST be included in the LSP
-	 State Report. Depending on whether RSVP signaling was performed over
-	 IPv4 or IPv6, the LSP Object will contain an IPV4-ERROR_SPEC TLV or an
-	 IPV6-ERROR_SPEC TLV.</t>
-	 
-	 <t>The format of the IPV4-RSVP-ERROR-SPEC TLV is shown in the following
+	 <t>The LSP Error code TLV is an optional TLV for use in the LSP object 
+	 to convey error information. When an LSP Update Request fails, 
+	 an LSP State Report MUST be sent to report the current state of the LSP, and
+	 SHOULD contain the LSP-ERROR-CODE TLV indicating the reason for the failure. 
+	 Similarly, when a PCRpt 
+	 is sent as a result of an LSP transitioning to non-operational state, 
+	 the LSP-ERROR-CODE TLV SHOULD be included to indicate the reason for the transition. </t>
+
+	 <t>The format of the LSP-ERROR-CODE TLV is shown in the following
 	 figure:</t>
 
-	 <figure anchor="IPv4-ERROR_SPEC-Flags-Fmt" title="IPV4-RSVP-ERROR-SPEC TLV format">
+ 	 <figure anchor="LSP-Err-Code-TLV-Fmt" title="LSP-ERROR-CODE TLV format">
 	   <artwork><![CDATA[
    0                   1                   2                   3
    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-  |           Type=[TBD]          |            Length=8           |
+  |           Type=[TBD]          |            Length=4           |
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |                          LSP Error Code                       |
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	  ]]></artwork>
+	 </figure>
+
+	 <t>The type of the TLV is [TBD] and it has a fixed length of 4 octets.
+	 The value contains an error code 
+	 that indicates the cause of the failure. </t>
+	 
+	 <t> The following LSP Error Codes are defined: </t> 
+	   <texttable anchor="LSP-ERROR-TLV-CP-values" style="none" suppress-title="true">
+	 <ttcol align="center" width='20%'>Value</ttcol>
+	 <ttcol align="left" width='40%'>Meaning </ttcol>
+
+ 	 <c>1</c><c>&nbsp;Unknown reason </c>
+	 <c>2</c><c>&nbsp;Limit reached for PCE-controlled LSPs</c>
+	 <c>3</c><c>&nbsp;Too many pending LSP update requests</c>
+	 <c>4</c><c>&nbsp;Unacceptable PCupd parameters</c>
+	 <c>5</c><c>&nbsp;Internal error</c>
+ 	 <c>6</c><c>&nbsp;LSP administratively brought down</c>
+	 <c>7</c><c>&nbsp;LSP preempted</c>
+	 <c>8</c><c>&nbsp;RSVP signaling error</c>
+	 
+       </texttable>
+       </section>
+	   
+       <section anchor="ERROR_SPEC" title="RSVP Error Spec TLV">
+	 
+	 <t>The RSVP-ERROR-SPEC TLV is an optional TLV for use in the LSP 
+	 object to carry RSVP error information. It includes the
+	 RSVP ERROR_SPEC or USER_ERROR_SPEC Object (<xref target="RFC2205"/> 
+	 and  <xref target="RFC5284"/>) which were returned to the PCC from 
+	 a downstream node. If the set up of an LSP fails at a 
+	 downstream node which returned an ERROR_SPEC to the PCC, the PCC SHOULD 
+	 include in the PCrpt for this LSP the LSP-ERROR-CODE TLV with  LSP Error Code = "RSVP
+	 signaling error" and the RSVP-ERROR-SPEC TLV with the relevant RSVP ERROR-SPEC 
+	 or USER_ERROR_SPEC Object.
+	 </t>
+	 
+	 <t>The format of the RSVP-ERROR-SPEC TLV is shown in the following
+	 figure:</t>
+
+	 <figure anchor="RSVP_ERROR_SPEC-Fmt" title="RSVP-ERROR-SPEC TLV format">
+	   <artwork><![CDATA[
+   0                   1                   2                   3
+   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |           Type=[TBD]          |            Length (variable)  |
   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
   |                                                               |
-  +                IPv4 ERROR_SPEC object (rfc2205)               +
+  +                RSVP ERROR_SPEC or USER_ERROR_SPEC Object      +
   |                                                               |
   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 	  ]]></artwork>
 	 </figure>
 
-	 <t>The type of the TLV is [TBD] and it has a fixed length of 8 octets.
-	 The value contains the RSVP IPv4 ERROR_SPEC object defined in <xref
-	 target="RFC2205"/>. Error codes allowed in the ERROR_SPEC object are
-	 defined in <xref target="RFC2205"/>, <xref target="RFC3209"/> and 
-	 <xref target="RFC3473"/>..</t>
+	 <t>The type of the TLV is [TBD] and it has a variable length.
+	 The value contains the RSVP ERROR_SPEC or USER_ERROR_SPEC object, 
+	 including the object header. </t>
 
-	 <t>The format of the IPV6-RSVP-ERROR-SPEC TLV is shown in the following
-	 figure:</t>
-
-	 <figure anchor="IPv6-ERROR_SPEC-Flags-Fmt" title="IPV6-RSVP-ERROR-SPEC TLV format">
-	   <artwork><![CDATA[
-   0                   1                   2                   3
-   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-  |           Type=[TBD]          |            Length=20          |
-  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-  |                                                               |
-  //               IPv6 ERROR_SPEC object (rfc2205)              //
-  |                                                               |
-  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-	  ]]></artwork>
-	 </figure>
-
-	 <t>The type of the TLV is [TBD] and it has a fixed length of 20 octets.
-	 The value contains the RSVP IPv6 ERROR_SPEC object defined in <xref
-	 target="RFC2205"/>. Error codes allowed in the ERROR_SPEC object are
-	 defined in <xref target="RFC2205"/>, <xref target="RFC3209"/> and 
-	 <xref target="RFC3473"/>. </t>
        </section>
 
        <section anchor="LSP-DB-VERSION-TLV-LSP" title="LSP State Database Version TLV">
@@ -1896,8 +2156,50 @@ Where:
 	 carried in multiple delegation parameter TLVs, which will be defined in
 	 future revisions of this document.</t>
        </section>
-
      </section>
+	 
+	 <section anchor="LSPA-Object-Format" title="Optional TLVs for the LSPA Object">
+	  <t> TLVs that may be included in the LSPA Object are described in
+       the following sections and in separate technology-specific documents. </t>
+	   
+	   <section anchor="Tunnel-Id-TLVs" title="Tunnel ID TLV">
+	   	 <t>The Tunnel ID TLV MAY be included in the LSPA object.</t>
+
+	 <t>The format of the TUNNEL TLV is shown in the following
+	 figure:</t>
+
+ 	 <figure anchor="tunnel-ID-TLV-Fmt" title="Tunnel-ID TLV format">
+	   <artwork><![CDATA[
+   0                   1                   2                   3
+   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |           Type=[TBD]          |           Length=4            |
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |             Reserved          |           Tunnel ID           |
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  
+	  ]]></artwork>
+	 </figure>
+
+	 <t>The type of the TLV is [TBD] and it has a fixed length of 4 octets.
+	 The value contains a single field:
+
+	 <list style="hanging">
+	   <t hangText="Tunnel ID:"> contains the 16-bit 'Tunnel ID' identifier
+	   defined in <xref target="RFC3209"/>, Section 4.6.1.1 for the
+	   LSP_TUNNEL_IPv4 Session Object. Tunnel ID remains constant over the
+	   life time of a tunnel. However, when Global Path Protection or Global
+	   Default Restoration is used, both the primary and secondary LSPs have
+	   their own Tunnel IDs. </t>
+	 </list>
+	 </t>
+	   </section> 
+	   
+	   <section anchor="LSP-Symb-Name-TLV2" title="Symbolic Path Name TLV">
+	   <t> See section <xref target="LSP-Symb-Name-TLV"/>. </t>
+	   </section>
+	 </section> 
+	
    </section>
 
    <section anchor="IANA" title="IANA Considerations">
@@ -1927,6 +2229,9 @@ Where:
  	 <c></c><c>&nbsp;&nbsp;&nbsp;&nbsp;</c><c></c>
 	 <c>32</c><c>LSP</c><c>This document</c>
  	 <c></c><c>Object-Type</c><c></c>
+ 	 <c></c><c>&nbsp;&nbsp;&nbsp;&nbsp;1</c><c></c>
+	 <c>33</c><c>SRP</c><c>This document</c>
+	 <c></c><c>Object-Type</c><c></c>
  	 <c></c><c>&nbsp;&nbsp;&nbsp;&nbsp;1</c><c></c>
       </texttable>
      </section>
@@ -1972,6 +2277,7 @@ Where:
 	 <list style="hanging" hangIndent="17">
 	   <t hangText=" Error-value=8:">LSP Object missing</t>
 	   <t hangText=" Error-value=12:">LSP-DB-VERSION TLV missing</t>
+	   <t hangText=" Error-value=13:">SRP Object missing</t> 
 
 	 </list>
 	 </t>
@@ -2014,10 +2320,14 @@ Where:
 	 <ttcol align="left" width='40%'>Reference </ttcol>
  	 <c>16</c><c>&nbsp;STATEFUL-PCE-CAPABILITY</c><c>This document</c>
 	 <c>17</c><c>&nbsp;SYMBOLIC-PATH-NAME</c><c>This document</c>
- 	 <c>21</c><c>&nbsp;IPV4-RSVP-ERROR-SPEC</c><c>This document</c>
- 	 <c>22</c><c>&nbsp;IPV6-RSVP-ERROR-SPEC</c><c>This document</c>
+	 <c>18</c><c>&nbsp;IPV4-LSP-IDENTIFIERS</c><c>This document</c>
+ 	 <c>19</c><c>&nbsp;IPV6-LSP-IDENTIFIERS</c><c>This document</c>
+	 <c>20</c><c>&nbsp;LSP-ERROR-CODE</c><c>This document</c>
+	 <c>21</c><c>&nbsp;RSVP-ERROR-SPEC</c><c>This document</c>
+ 	
  	 <c>23</c><c>&nbsp;LSP-DB-VERSION</c><c>This document</c>
 	 <c>24</c><c>&nbsp;PREDUNDANCY-GROUP-ID</c><c>This document</c>
+	 <c>25</c><c>&nbsp;TUNNEL-ID</c><c>This document</c>
        </texttable>
      </section>
 
@@ -2046,7 +2356,26 @@ Where:
        </texttable>
      </section>
 
-
+	<section anchor="LSP-ERROR-CODE-TLV-CP" title="LSP-ERROR-CODE TLV">
+	<?rfc subcompact="no"?>
+       <t>This document requests that a registry is created to manage the value of the
+	   LSP error code field in this TLV. This field specifies the reason for failure
+	   to update the LSP. </t> 
+	   
+	   <texttable anchor="LSP-ERROR-TLV-CP-values2" style="none" suppress-title="true">
+	 <ttcol align="center" width='20%'>Value</ttcol>
+	 <ttcol align="left" width='40%'>Meaning </ttcol>
+	 <c>1</c><c>&nbsp;Unknown reason </c>
+	 <c>2</c><c>&nbsp;Limit reached for PCE-controlled LSPs</c>
+	 <c>3</c><c>&nbsp;Too many pending LSP update requests</c>
+	 <c>4</c><c>&nbsp;Unacceptable PCupd parameters</c>
+	 <c>5</c><c>&nbsp;Internal error</c>
+ 	 <c>6</c><c>&nbsp;LSP administratively brought down</c>
+	 <c>7</c><c>&nbsp;LSP preempted</c>
+	 <c>8</c><c>&nbsp;RSVP signaling error</c>
+       </texttable>
+     </section>
+	 
    </section>
 
    <section anchor="Manageability" title="Manageability Considerations">
@@ -2246,11 +2575,11 @@ Where:
      <t>We would like to thank Adrian Farrel, Cyril Margaria and Ramon Casellas
      for their contributions to this document.</t>
 
-     <t>We would like to thank Shane Amante,Julien Meuric, Kohei Shiomoto, Paul
+     <t>We would like to thank Shane Amante, Julien Meuric, Kohei Shiomoto, Paul
      Schultz and Raveendra Torvi for their comments and suggestions. Thanks also
      to Cyril Margaria, Jon Hardwick, Dhruv Dhoddy, Oscar Gonzales de Dios, 
-	 Tomas Janciga, Stefan Kobza,
-     Kexin Tang, Matej Spanik, Jon Parker, Marek Zavodsky and Calvin Ying 
+	 Tomas Janciga, Stefan Kobza, Kexin Tang, Matej Spanik, Jon Parker, Marek Zavodsky, 
+	 Ambrose Kwong, Ashwin Sampath, Calvin Ying and Xian Zhang
 	 for helpful comments and discussions.</t>
     </section>
   </middle>
@@ -2266,6 +2595,7 @@ Where:
       <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5089.xml"?>
       <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5440.xml"?>
       <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5226.xml"?>
+	  <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5284.xml"?>
       <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5511.xml"?>
 
    </references>
