@@ -1409,7 +1409,7 @@
 	  the LSP parameters proposed in the PCUpd message are unacceptable, it 
 	  MUST report this error by including the 
 	  LSP-ERROR-CODE TLV (<xref target="LSP-err-code-tlv"/>) with LSP error 
-	  value="Unacceptable PCupd parameters" in the LSP object in the PCRpt message to the 
+	  value="Unacceptable PCUpd parameters" in the LSP object in the PCRpt message to the 
 	  PCE. It MAY react further to this error by revoking the delegation. 
 	  </t>
 
@@ -1423,11 +1423,11 @@
 	  <t>A PCC sends each LSP State Report to each stateful PCE that is
 	  connected to the PCC.</t>
 	  
-	  <t> PCErr and PCRpt messages triggered as a result of a PCupd message MUST 
+	  <t> PCErr and PCRpt messages triggered as a result of a PCUpd message MUST 
 	  include the SRP-ID-number from the PCUpd. This provides correlation 
 	  of requests and errors and 
 	  acknowledgement of state processing.  The PCC may choose to compress
-	  state when processing PCupd. In this case, receipt of a higher SRP-ID-number implicitly
+	  state when processing PCUpd. In this case, receipt of a higher SRP-ID-number implicitly
 	  acknowledges processing all the earlier updates for the specific LSP. </t> 
 
 	  <t>A PCC MUST NOT send to any PCE a Path Computation Request for a
@@ -1502,7 +1502,7 @@ Where:
 	sent in the PCUpd message
 	that triggered the state that is reported, or the reserved value 0x00000000 if 
 	the state is not as a result of processing a PCUpd message. If the PCC 
-	compressed several PCupd messages for the same LSP by only processing the latest one, 
+	compressed several PCUpd messages for the same LSP by only processing the latest one, 
 	then it should use the SRP-ID-number of that request. 
 	If the SRP object is missing, the receiving PCE MUST send a PCErr
 	message with Error-type=6 (Mandatory Object missing) and
@@ -1573,7 +1573,7 @@ Where:
 	<xref target="RFC3209"/> in the re-signaling operation. When traffic 
 	switchover to the updated path and teardown of the old path are under 
 	the control of PCC, no extensions are necessary. The PCC MUST send a 
-	PCrpt message with the new path attributes to the PCE only after traffic 
+	PCRpt message with the new path attributes to the PCE only after traffic 
 	has been switched over. In some situations, it may be desirable for 
 	the PCE to control the timing of traffic switchover. This mode of 
 	operation and the extensions necessary to support it are left 
@@ -1583,7 +1583,7 @@ Where:
 	<t>A PCC MUST respond with an LSP State Report to each LSP Update
 	Request it processed to indicate the resulting state of the LSP in the network 
 	(even if this processing did not result in changing the state of the LSP). 
-	The SRP-ID-number included in the PCRpt MUST match that in the PCupd. A PCC
+	The SRP-ID-number included in the PCRpt MUST match that in the PCUpd. A PCC
 	MAY respond with multiple LSP State Reports to report LSP setup
 	progress of a single LSP. In that case, the SRP-ID-number MUST be included while the 
 	state of the LSP is "pending", afterwards the reserved value 0x00000000 SHOULD be used..</t>
@@ -1596,12 +1596,12 @@ Where:
 	<t>If the rate of PCUpd messages sent to a PCC for the same target LSP
 	exceeds the rate at which the PCC can signal LSPs into the network, the
 	PCC MAY perform state compression and only signal the last
-	modification in its queue, as the last PCupd contains the most up-to-date desired
-	state for the LSP. If two PCupd arrive for the same LSP in quick
+	modification in its queue, as the last PCUpd contains the most up-to-date desired
+	state for the LSP. If two PCUpd arrive for the same LSP in quick
 	succession and the PCC started the signaling of the changes relevant to the 
-	first PCupd, then it MUST wait until the signaling finishes (and report the 
+	first PCUpd, then it MUST wait until the signaling finishes (and report the 
 	new state via a PCRpt) before attempting
-	to apply the changes indicated in the second PCupd. </t>
+	to apply the changes indicated in the second PCUpd. </t>
 	
 	<t>Note also that it is up to the PCE to handle inter-LSP dependencies;
 	for example, if ordering of LSP set-ups is required, the PCE has to wait
@@ -1613,12 +1613,12 @@ Where:
 
 	
 	
-	<section anchor="PCerr" title="The PCErr Message"> 
+	<section anchor="PCErr" title="The PCErr Message"> 
 	<t> If the stateful PCE capability has been negotiated on the PCEP 
 	session, the PCErr message 
 	MUST include the SRP object. If the error reported is the result of 
 	an LSP update request, then the SRP-ID-number MUST be the one from 
-    the PCupd that triggered the error. 
+    the PCUpd that triggered the error. 
 	If it is unsolicited, the SRP-ID-number MUST be the reserved value 0x00000000.</t> 
 	</section> 
 	
@@ -1819,7 +1819,7 @@ Where:
 	   PCE operation (for example in the case of a link down event), then the reserved value of 
 	   0x00000000 is used instead. An SRP-ID-number is considered unacknowledged and cannot
 	   be reused until a PCErr or PCRpt arrives with an SRP-ID-number equal or higher for 
-	   the same LSP. A PCrpt with state "Pending" is not considered as an acknowledgement. </t> 
+	   the same LSP. A PCRpt with state "Pending" is not considered as an acknowledgement. </t> 
 
 	 </section>
 
@@ -2085,7 +2085,7 @@ Where:
  	 <c>1</c><c>&nbsp;Unknown reason </c>
 	 <c>2</c><c>&nbsp;Limit reached for PCE-controlled LSPs</c>
 	 <c>3</c><c>&nbsp;Too many pending LSP update requests</c>
-	 <c>4</c><c>&nbsp;Unacceptable PCupd parameters</c>
+	 <c>4</c><c>&nbsp;Unacceptable PCUpd parameters</c>
 	 <c>5</c><c>&nbsp;Internal error</c>
  	 <c>6</c><c>&nbsp;LSP administratively brought down</c>
 	 <c>7</c><c>&nbsp;LSP preempted</c>
@@ -2102,7 +2102,7 @@ Where:
 	 and  <xref target="RFC5284"/>) which were returned to the PCC from 
 	 a downstream node. If the set up of an LSP fails at a 
 	 downstream node which returned an ERROR_SPEC to the PCC, the PCC SHOULD 
-	 include in the PCrpt for this LSP the LSP-ERROR-CODE TLV with  LSP Error Code = "RSVP
+	 include in the PCRpt for this LSP the LSP-ERROR-CODE TLV with  LSP Error Code = "RSVP
 	 signaling error" and the RSVP-ERROR-SPEC TLV with the relevant RSVP ERROR-SPEC 
 	 or USER_ERROR_SPEC Object.
 	 </t>
@@ -2372,7 +2372,7 @@ Where:
 	 <c>1</c><c>&nbsp;Unknown reason </c>
 	 <c>2</c><c>&nbsp;Limit reached for PCE-controlled LSPs</c>
 	 <c>3</c><c>&nbsp;Too many pending LSP update requests</c>
-	 <c>4</c><c>&nbsp;Unacceptable PCupd parameters</c>
+	 <c>4</c><c>&nbsp;Unacceptable PCUpd parameters</c>
 	 <c>5</c><c>&nbsp;Internal error</c>
  	 <c>6</c><c>&nbsp;LSP administratively brought down</c>
 	 <c>7</c><c>&nbsp;LSP preempted</c>
