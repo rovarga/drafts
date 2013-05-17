@@ -1,0 +1,405 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd">
+<?rfc toc="yes"?>
+<?rfc tocompact="yes"?>
+<?rfc tocdepth="3"?>
+<?rfc tocindent="yes"?>
+<?rfc symrefs="yes"?>
+<?rfc sortrefs="yes"?>
+<?rfc comments="yes"?>
+<?rfc inline="yes"?>
+<?rfc compact="yes"?>
+<?rfc subcompact="no"?>
+<rfc category="std" docName="draft-crabbe-pce-stateful-pce-mpls-te-02" ipr="trust200902">
+  <front>
+    <title abbrev="Stateful PCE extensions for MPLS-TE LSPs">
+    Stateful PCE extensions for MPLS-TE LSPs</title>
+
+    <author fullname="Edward Crabbe" initials="E." surname="Crabbe">
+      <organization>Google, Inc.</organization>
+      <address>
+	<postal>
+	  <street>1600 Amphitheatre Parkway</street>
+	  <city>Mountain View</city>
+	  <region>CA</region>
+	  <code>94043</code>
+	  <country>US</country>
+	</postal>
+	<email>edc@google.com</email>
+      </address>
+    </author>
+
+    <author fullname="Jan Medved" initials="J." surname="Medved">
+      <organization>Cisco Systems, Inc.</organization>
+      <address>
+	<postal>
+	  <street>170 West Tasman Dr.</street>
+	  <city>San Jose</city>
+	  <region>CA</region>
+	  <code>95134</code>
+	  <country>US</country>
+	</postal>
+	<email>jmedved@cisco.com</email>
+      </address>
+    </author>
+
+    <author fullname="Ina Minei" initials="I." surname="Minei">
+      <organization>Juniper Networks, Inc.</organization>
+      <address>
+	<postal>
+	  <street>1194 N. Mathilda Ave.</street>
+	  <city>Sunnyvale</city>
+	  <region>CA</region>
+	  <code>94089</code>
+	  <country>US</country>
+	</postal>
+	<email>ina@juniper.net</email>
+      </address>
+    </author>
+	
+	<author fullname="Robert Varga" initials="R." surname="Varga">
+      <organization>Pantheon Technologies SRO</organization>
+      <address>
+	<postal>
+	  <street>Mlynske Nivy 56</street>
+	  <city>Bratislava</city>
+	  <code>821 05</code>
+	  <country>Slovakia</country>
+	</postal>
+	<email>robert.varga@pantheon.sk</email>
+      </address>
+    </author>
+    <date day="14" month="May" year="2013" />
+
+    <workgroup>Network Working Group</workgroup>
+
+    <abstract>
+      <t>The Path Computation Element Communication Protocol (PCEP) provides
+      mechanisms for Path Computation Elements (PCEs) to perform path
+      computations in response to Path Computation Clients (PCCs) requests.</t>
+
+      <t><xref target='I-D.ietf-pce-stateful-pce'></xref>  describes a set of extensions to PCEP to
+      provide stateful control. This document describes the objects and TLVs 
+	  to be used with these PCEP extensions to control Multiprotocol
+      Label Switching (MPLS) Traffic Engineering Label Switched Paths (TE LSP)
+      via a stateful PCE.</t> 
+    </abstract>
+
+    <note title="Requirements Language">
+      <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+      "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+      document are to be interpreted as described in <xref target="RFC2119"/>.
+      </t>
+    </note>
+  </front>
+
+  <middle>
+    <section title="Introduction">
+	<t>The Path Computation Element Communication Protocol (PCEP) provides
+      mechanisms for Path Computation Elements (PCEs) to perform path
+      computations in response to Path Computation Clients (PCCs) requests.</t>
+
+      <t><xref target='I-D.ietf-pce-stateful-pce'></xref> describes a set of extensions to PCEP to
+      provide stateful control. This document describes the objects and TLVs 
+	  to be used with these PCEP extensions to control Multiprotocol
+      Label Switching (MPLS) Traffic Engineering Label Switched Paths (TE LSP)
+      via a stateful PCE.</t>
+    </section>
+
+    <section title="Terminology">
+      <t>This document uses the following terms defined in <xref
+      target="RFC5440"/>: PCC, PCE, PCEP Peer.</t>
+
+
+	  <t>This document uses the following terms defined in  <xref target='I-D.ietf-pce-stateful-pce'></xref> : 
+	  Passive Stateful PCE, Active Stateful PCE, Delegation, Delegation Timeout
+	  Interval, LSP State Report, LSP Update Request, LSP Priority, LSP State Database,
+	  Revocation.</t>
+
+      <t>Within this document, when describing PCE-PCE communications, the
+      requesting PCE fills the role of a PCC.  This provides a saving in
+      documentation without loss of function.</t>
+
+      <t>The message formats in this document are specified using Routing
+      Backus-Naur Format (RBNF) encoding as specified in <xref
+      target="RFC5511"/>.</t>
+    </section>
+	
+
+    <section anchor="Messages" title="MPLS-TE specific descriptors used in PCEP Messages">
+      <t>As defined in <xref target="RFC5440"/>, a PCEP message consists of a
+      common header followed by a variable-length body made of a set of objects
+      that can be either mandatory or optional.  <xref target='I-D.ietf-pce-stateful-pce'></xref> describes 
+	  the messages and objects needed in support of stateful PCE. The following sections 
+	  contain MPLS-TE specific descriptors used in some of these messages.</t>
+
+      <section anchor="PCRpt" title="MPLS-TE specific descriptors for the PCRpt Message">
+	
+
+	<t>The format of the PCRpt message is defined in  
+	<xref target='I-D.ietf-pce-stateful-pce'></xref> as follows, and included here for easy reference:</t>
+	<figure>
+	  <artwork><![CDATA[
+   <PCRpt Message> ::= <Common Header>
+                       <state-report-list>
+Where:
+
+   <state-report-list> ::= <state-report>[<state-report-list>]
+
+   <state-report> ::= <SRP>
+	                  <LSP>
+                      [<path-list>]
+
+Where:
+
+   <path-list>::=<path>[<path-list>]
+  	  ]]></artwork>
+	</figure>
+	
+	<t> For MPLS-TE LSPs, the path descriptor is defined as follows:</t>
+	
+	<figure>
+	  <artwork><![CDATA[
+   <path>::=<ERO><attribute-list>
+
+Where:
+
+    <attribute-list> ::= [<LSPA>]
+                         [<BANDWIDTH>]
+                         [<RRO>]
+                         [<metric-list>]
+
+    <metric-list> ::= <METRIC>[<metric-list>]
+	  ]]></artwork>
+	</figure>
+
+	
+	<t>The LSP State Report MAY contain a path descriptor for the primary
+	path and one or more path descriptors for backup paths. A path
+	descriptor MUST contain an ERO object as it was specified by a PCE or an
+	operator. A path descriptor MUST contain the RRO object if a primary or
+	secondary LSP is set up along the path in the network. A path descriptor
+	MAY contain the LSPA, BANDWIDTH, and METRIC objects. The ERO,LSPA,
+	BANDWIDTH, METRIC, and RRO objects are defined in<xref
+	target="RFC5440"/>. </t>
+
+    </section>
+
+    <section anchor="PCUpd" title="MPLS-TE specific descriptors for the PCUpd Message">
+	<t>A Path Computation LSP Update Request message (also referred to as
+	PCUpd message) is a PCEP message sent by a PCE to a PCC to update
+	attributes of an LSP. A PCUpd message can carry more than one LSP Update
+	Request. The Message-Type field of the PCEP common header for the PCUpd
+	message is set to [TBD].</t>
+
+	<t>The format of the PCUpd message is defined in 
+	 <xref target='I-D.ietf-pce-stateful-pce'></xref> and included 
+	here for easy reference:</t>
+	<figure> 
+	  <artwork><![CDATA[
+
+   <PCUpd Message> ::= <Common Header>
+                       <udpate-request-list>
+Where:
+
+   <update-request-list> ::= <update-request>[<update-request-list>]
+
+   <update-request> ::= <SRP>
+                        <LSP>
+                        [<path-list>]
+
+Where:
+
+   <path-list>::=<path>[<path-list>]
+  	  ]]></artwork>
+	</figure>
+	
+	<t> For MPLS-TE LSPs, the endoding of path descriptor is defined as follows:</t>
+	<figure>
+	  <artwork><![CDATA[
+   <path>::=<ERO><attribute-list>
+
+Where:	
+   <path>::=<ERO><attribute-list>
+
+Where:
+
+   <attribute-list> ::= [<LSPA>]
+                        [<BANDWIDTH>]
+                        [<metric-list>]
+     
+   <metric-list> ::= <METRIC>[<metric-list>]
+	  ]]></artwork>
+ 	</figure>
+
+	
+
+	<t>The LSP Update Request MUST contain a path descriptor for the primary
+	path, and MAY contain one or more path descriptors for backup paths. A
+	path descriptor MUST contain an ERO object. A path descriptor MAY
+	further contain the BANDWIDTH, IRO, and METRIC objects. The ERO, LSPA,
+	BANDWIDTH, METRIC, and IRO objects are defined in <xref
+	target="RFC5440"/>.</t>
+
+    </section>
+
+    <section anchor="PCReq" title="MPLS-TE specific encoding for the PCReq Message for stateful PCE">
+	<t>A PCC MAY include the LSP object defined in  <xref target='I-D.ietf-pce-stateful-pce'></xref> 
+	in the PCReq message if the stateful PCE capability has been
+	negotiated on a PCEP session between the PCC and a PCE. The definition
+	of the PCReq message (see <xref target="RFC5440"/>, Section 6.4) is then
+	extended as follows:</t>
+
+	<figure>
+	  <artwork><![CDATA[
+   <PCReq Message>::= <Common Header>
+                      [<svec-list>]
+                      <request-list>
+
+Where:
+
+      <svec-list>::=<SVEC>[<svec-list>]
+      <request-list>::=<request>[<request-list>]
+
+      <request>::= <RP>
+                   <END-POINTS>
+                   [<LSP>]              <--- New Object
+                   [<LSPA>]
+                   [<BANDWIDTH>]
+                   [<metric-list>]
+                   [<RRO>[<BANDWIDTH>]]
+                   [<IRO>]
+                   [<LOAD-BALANCING>]
+
+Where:
+
+   <metric-list>::=<METRIC>[<metric-list>]
+	  ]]></artwork>
+ 	</figure>
+    </section>
+
+    <section anchor="PCRep" title="MPLS-TE specific encoding for the PCRep Message for stateful PCE">
+	<t>A PCE MAY include the LSP object defined in  <xref target='I-D.ietf-pce-stateful-pce'></xref>
+	in the PCRep message if the stateful PCE capability has been
+	negotiated on a PCEP session between the PCC and the PCE and the LSP
+	object was included in the corresponding PCReq message from the PCC. The
+	definition of the PCRep message (see <xref target="RFC5440"/>, Section
+	6.5) is then extended as follows</t>
+
+	<figure>
+	  <artwork><![CDATA[
+   <PCRep Message> ::= <Common Header>
+                       <response-list>
+
+Where:
+
+      <response-list>::=<response>[<response-list>]
+
+      <response>::=<RP>
+                  [<LSP>]               <--- New Object
+                  [<NO-PATH>]
+                  [<attribute-list>]
+                  [<path-list>]
+
+      <path-list>::=<path>[<path-list>]
+
+      <path>::= <ERO><attribute-list>
+
+Where:
+
+    <attribute-list>::=[<LSPA>]
+                       [<BANDWIDTH>]
+                       [<metric-list>]
+                       [<IRO>]
+
+    <metric-list>::=<METRIC>[<metric-list>]
+	  ]]></artwork>
+ 	</figure>
+    </section>
+
+   </section>
+
+   <section anchor="IANA" title="IANA Considerations">
+     <t>This document requests IANA actions to allocate code points for the
+     protocol elements defined in this document. Values shown here are suggested
+     for use by IANA.</t>
+     
+     
+
+     <section anchor="PCEP-Error-Object" title="PCEP-Error Object">
+       <t>This document defines new Error-Type and Error-Value for the following
+       new error conditions:
+
+       <vspace blankLines="1" /> 
+       
+       <?rfc subcompact="yes"?>
+       <list style="hanging" hangIndent="13">
+
+	 <t hangText=" Error-Type">Meaning</t>
+
+	 <t hangText="    6">Mandatory Object missing
+	 <list style="hanging" hangIndent="17">
+	   <t hangText=" Error-value=9:">ERO Object missing for a path in an
+	   LSP Update Request where TE-LSP setup is requested</t>
+	   <t hangText=" Error-value=10:">BANDWIDTH Object missing for a path in
+	   an LSP Update Request where TE-LSP setup is requested</t>
+	   <t hangText=" Error-value=11:">LSPA Object missing for a path in an
+	   LSP Update Request where TE-LSP setup is requested</t>
+
+	 </list>
+	 </t>
+
+       </list>
+
+       </t>
+     </section>
+
+    
+   </section>
+
+  
+
+
+   <section anchor="Security" title="Security Considerations">
+    <t>The security considerations listed in  <xref target='I-D.ietf-pce-stateful-pce'></xref>  apply to this document as well. </t>
+   </section>
+
+   <section anchor="Acknowledgements" title="Acknowledgements">
+     <t>We would like to thank Adrian Farrel, Cyril Margaria and Ramon Casellas
+     for their contributions to this document.</t>
+
+     <t>We would like to thank Shane Amante,Julien Meuric, Kohei Shiomoto, Paul
+     Schultz and Raveendra Torvi for their comments and suggestions. Thanks also
+     to Dhruv Dhoddy, Oscar Gonzales de Dios, Tomas Janciga, Stefan Kobza and
+     Kexin Tang for helpful discussions.</t>
+    </section>
+  </middle>
+
+  <back>
+    <references title="Normative References">
+      <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.2119.xml"?>
+      <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.2205.xml"?>
+      <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.3209.xml"?>
+      <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.4090.xml"?>
+      <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5088.xml"?>
+      <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5089.xml"?>
+      <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5440.xml"?>
+      <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5226.xml"?>
+      <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5511.xml"?>
+	  <?rfc include="reference.I-D.ietf-pce-stateful-pce"?>
+   </references>
+
+   <references title="Informative References">
+     <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.2702.xml"?>
+     <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.3031.xml"?>
+     <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.3346.xml"?>
+     <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.3630.xml"?>
+     <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.4655.xml"?>
+     <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.4657.xml"?>
+     <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5305.xml"?>
+     <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5394.xml"?>
+     <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5557.xml"?>
+   </references>
+    
+  </back>
+</rfc>
