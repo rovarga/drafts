@@ -146,11 +146,19 @@
      delegated LSP.  Revocation revokes the rights granted to the PCE 
 	 in the delegation operation. </t>
 
-	<t hangText="Delegation Timeout Interval:"> when a PCEP session is
+	<t hangText="Redelegation Timeout Interval:"> when a PCEP session is
 	terminated, a PCC waits for this time period before revoking LSP
-	delegation to a PCE. The delegation timeout interval is a PCC-local value that 
+	delegation to a PCE and attempting to redelegate LSPs associated with the terminated
+	PCEP session to an alternate PCE. The redelegation timeout interval is a PCC-local value that 
 	can be either operator-configured or dynamically computed by the PCC based on 
 	local policy. </t>
+	
+	<t hangText="State Timeout Interval:"> when a PCEP session is
+	terminated, a PCC waits for this time period before flushing LSP state associated
+	with the PCEP session.  During this interval, an LSP may be redelegated to another 
+	PCE, preventing the flushing of LSP state.  The State Timeout Interval is a 
+	PCC-local value that can be either operator-configured or dynamically computed by the PCC 
+	based on local policy. </t>
  
 	<t hangText="LSP State Report:"> an operation to send LSP state
 	(Operational / Admin Status, LSP attributes configured and set by a PCE,
@@ -1221,18 +1229,29 @@
 	  indicating "LSP is not delegated" (see <xref
 	  target="PCEP-Error-Object"/>).</t>
 
-	  <t>When a PCC's PCEP session with a PCE terminates, the PCC MUST wait
-	  a time interval specified in 'Delegation Timeout Interval' before
-	  revoking LSP delegations to the PCE.  If a new PCEP session with the
-	  PCE can be established before the 'Delegation Timeout' timer expires,
-	  LSP delegations to the PCE remain intact.  If, after expiry of the
-	  'Delegation Timeout' timer, a PCC cannot delegate an LSP to another
+	  <t>When a PCC's PCEP session with a PCE terminates unexpectedly, the PCC MUST wait
+	  the time interval specified in Redelegation Timeout Interval before before
+	  revoking LSP delegations to that PCE and attempting to redelegate LSPs to an 
+	  alternate PCE.   If a  PCEP session with the original PCE can be reestablished 
+	  before the Redelegation Timeout Interval timer expires, LSP delegations to the PCE remain 
+	  intact.
+	  </t>
+	  
+	  
+	  <t>Likewise, when a PCC's PCEP session with a PCE 
+	  terminates unexpectedly, the PCC MUST wait for the State Timeout Interval before 
+	  flushing any LSP state associated with that PCE.  
+	  If the State Timeout Interval timer expires before a PCC has redelegated an LSP to another
 	  PCE (for example, if a PCC is not connected to any active stateful PCE
 	  or if no connected active stateful PCE accepts the delegation), the
-	  PCC SHALL flush any LSP state set by the PCE.</t>
-
+	  PCC SHALL flush any LSP state set by the PCE.
+	  </t>
+	  
+	  <t>The State Timeout Interval SHOULD be greater than or equal to the Redelegation Timeout Interval.
+	  </t>
+	  
 	  <t>If State Synchronization Avoidance is enabled, a PCC MUST increment
-	  its LSP State Database version when the 'Delegation Timeout' timer
+	  its LSP State Database version when the 'Redelegation Timeout Interval' timer
 	  expires.</t>
   
 	</section>
@@ -1274,7 +1293,7 @@
 	  may have only a subset of LSPs delegated to it.  The backup PCE does 
 	  not update any LSPs that are not delegated to it, but receives all 
 	  LSP State Reports from a PCC.  When the primary PCE for a given LSP 
-	  set fails, after expiry of the delegation timeout, the PCC SHOULD
+	  set fails, after expiry of the redelegation timeout, the PCC SHOULD
 	  delegate to the redundant PCE all LSPs that had been previously delegated 
 	  to the failed PCE.
 	  </t>
@@ -2413,11 +2432,13 @@ Where:
        controlled by any PCE (for example, LSPs that are statically configured
        at the PCC).</t>
 
-       <t>A PCC implementation SHOULD allow the operator to specify the
-       Delegation Timeout Interval. The default value of the Delegation Timeout
+       <t>A PCC implementation SHOULD allow the operator to specify both the
+       Redelegation Timeout Interval and the State Flush Interval. The default value of the Redelegation Timeout
        Interval SHOULD be set to 30 seconds. An operator MAY also configure a policy
-	   that will dynamically adjust the Delegation Timeout, for example setting it 
-	   to zero when the PCC has an established session to a backup PCE. </t>
+	that will dynamically adjust the Redelegation Timeout, for example setting it 
+	to zero when the PCC has an established session to a backup PCE.  The default
+	value for the State Timeout Interval SHOULD be set to 60 seconds. 
+	</t>
 
        <t>When an LSP can no longer be delegated to a PCE, after the expiration
        of the Delegation Timeout Interval, the LSP MAY either: 1) retain its
