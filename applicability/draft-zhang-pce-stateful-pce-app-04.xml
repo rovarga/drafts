@@ -1,0 +1,1095 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd">
+<?rfc toc="yes"?>
+<?rfc tocompact="yes"?>
+<?rfc tocdepth="3"?>
+<?rfc tocindent="yes"?>
+<?rfc symrefs="yes"?>
+<?rfc sortrefs="yes"?>
+<?rfc comments="yes"?>
+<?rfc inline="yes"?>
+<?rfc compact="yes"?>
+<?rfc subcompact="no"?>
+<rfc category="info" docName="draft-zhang-pce-stateful-pce-app-04" ipr="trust200902">
+  <front>
+    <title abbrev="Applicability for Stateful PCE">
+    Applicability of Stateful Path Computation Element (PCE) </title>
+
+	<author fullname="Xian Zhang" initials="X." surname="Zhang" role="editor">
+      <organization>Huawei Technologies</organization>
+      <address>
+	<postal>
+	  <street>F3-5-B R&amp;D Center, Huawei Base Bantian, Longgang District
+</street>
+	  <city>Shenzhen</city>
+	  <region>Guangdong</region>
+	  <code>518129</code>
+	  <country>P.R.China</country>
+	</postal>
+	<email>zhang.xian@huawei.com</email>
+      </address>
+    </author>
+	
+	 <author fullname="Ina Minei" initials="I." surname="Minei" role="editor">
+      <organization>Juniper Networks, Inc.</organization>
+      <address>
+	<postal>
+	  <street>1194 N. Mathilda Ave.</street>
+	  <city>Sunnyvale</city>
+	  <region>CA</region>
+	  <code>94089</code>
+	  <country>US</country>
+	</postal>
+	<email>ina@juniper.net</email>
+      </address>
+    </author>
+	
+
+    <date day="24" month="May" year="2013" />
+
+
+    <workgroup>Network Working Group</workgroup>
+
+    <abstract>
+	<t>
+	A stateful Path Computation Element (PCE) maintains information about Label Switched Path (LSP) 
+	characteristics and resource usage within a network in order to provide traffic engineering 
+	calculations for its associated Path Computation Clients (PCCs).  This document describes general 
+	considerations for a stateful PCE deployment and examines its applicability and benefits 
+	through a number of use cases. Path Computation Element Protocol (PCEP) extensions
+	required for stateful PCE usage	are covered in separate documents.
+	</t>
+    </abstract>
+
+  </front>
+
+  <middle>
+	
+   
+   <section title="Introduction">
+      <t><xref target="RFC4655"/> defines the architecture for a Path Computation Element 
+	  (PCE)-based model for the computation of Multiprotocol Label Switching (MPLS) and 
+	  Generalized MPLS (GMPLS) Traffic Engineering Label Switched Paths (TE LSPs). 
+	  To perform such a constrained computation, a PCE stores the network topology 
+	  (i.e., TE links and nodes) and resource information (i.e., TE attributes) in
+	  its TE Database (TED). <xref target="RFC5440"/> describes the Path Computation Element
+      Protocol (PCEP). PCEP defines the communication between a Path Computation
+      Client (PCC) and a Path Control Element (PCE), or between two PCEs,
+      enabling computation of Multiprotocol Label Switching (MPLS) for Traffic
+      Engineering Label Switched Path (TE LSP) characteristics. Extensions for 
+	  support of GMPLS in PCEP are defined in 
+	  <xref target='I-D.ietf-pce-gmpls-pcep-extensions'></xref>. </t>
+	  
+	  <t> 
+	  As per <xref target="RFC4655"/>, a PCE can be either stateful or stateless. Stateless
+	  PCEs have been shown to be useful in many scenarios, including constraint-based path
+	  computation in multi-domain/multi-layer networks. Compared to a 
+	  stateless PCE, a stateful PCE has access to not only the network state, 
+	  but also to the set of active paths and their reserved resources.  Furthermore, a 
+	  stateful PCE might also retain information regarding LSPs
+	  under construction in order to reduce churn and resource contention.  This state
+	  allows the PCE to compute constrained paths while considering individual LSPs 
+	  and their interactions. Note that this requires reliable state synchronization mechanisms
+	  between the PCE and the network, PCE and PCC, and between cooperating PCEs,
+	  with potentially significant control plane overhead and maintenance of
+     a large amount of state data, as explained in <xref target="RFC4655"/>. 
+	  </t>	 
+	  
+	  <t> This document describes how a stateful PCE can be used to solve various problems
+	  for MPLS-TE and GMPLS networks, and the benefits it brings to such 
+	  deployments. Note that alternative solutions relying on stateless PCEs may also be
+	  possible for some of these use cases, and will be mentioned for completeness 
+	  where appropriate.
+	  </t> 
+	  
+    </section>
+
+    <section title="Terminology">
+      <t>This document uses the following terms defined in <xref
+      target="RFC5440"/>: PCC, PCE, PCEP Peer.</t>
+
+     
+      <t>This document uses the following terms defined in 
+	  <xref target='I-D.ietf-pce-stateful-pce'></xref>: Passive Stateful
+	  PCE, Active Stateful PCE, Delegation, Revocation, Delegation Timeout Interval, LSP State Report, 
+	  LSP Update Request, LSP State Database. </t>
+
+	 <t> This document defines the following term:
+	 <list style="hanging">
+		<t hangText="Minimum Cut Set:"> the minimum set of links for a specific
+		source destination pair which, when removed from the network, result in
+		a specific source being completely isolated from specific destination.
+		The summed capacity of these links is equivalent to the maximum capacity
+		from the source to the destination by the max-flow min-cut theorem.</t>
+     </list>
+     </t>
+    </section>
+
+	<section anchor="Stateful-PCE-overview" title="Overview of stateful PCE">
+	
+	<t> This section is included for the convenience of the reader, please refer to the 
+	referenced documents for details of the operation. </t>
+	
+	<t> <xref target='I-D.ietf-pce-stateful-pce'></xref>
+	  specifies a set of extensions to PCEP to enable stateful
+      control of tunnels within and across PCEP sessions in compliance with
+      <xref target="RFC4657"/>.  It includes mechanisms to effect tunnel state
+      synchronization between PCCs and PCEs, delegation of control over tunnels to
+      PCEs, and PCE control of timing and sequence of path computations within
+      and across PCEP sessions.</t>
+	  
+	  <t><xref target='I-D.ietf-pce-stateful-pce'></xref> applies equally
+	  to MPLS-TE and GMPLS LSPs. </t> 
+	  
+	  <t>Several new functions were added in PCEP to support stateful
+		  PCEs and are described in <xref target='I-D.ietf-pce-stateful-pce'></xref>.
+		  A function can be initiated either from a PCC towards a PCE (C-E) or
+		  from a PCE towards a PCC (E-C). The new functions are:
+
+		  <list style="hanging">
+			<t hangText="Capability negotiation (E-C,C-E):"> both the PCC and the
+			PCE must announce during PCEP session establishment that they support
+			PCEP Stateful PCE extensions.</t>
+
+			<t hangText="LSP state synchronization (C-E):"> after the session
+			between the PCC and a stateful PCE is initialized, the PCE must learn
+			the state of a PCC's LSPs before it can perform path computations or
+			update LSP attributes in a PCC.</t>
+
+			<t hangText="LSP Update Request (E-C):"> A PCE requests modification of
+			attributes on a PCC's LSP.</t>
+
+			<t hangText="LSP State Report (C-E):"> a PCC sends an LSP State Report
+			to a PCE whenever the state of an LSP changes.</t>
+
+			<t hangText="LSP control delegation (C-E,E-C):"> a PCC grants to a PCE
+			the right to update LSP attributes on one or more LSPs; the PCE becomes
+			the authoritative source of the LSP's attributes as long as the
+			delegation is in effect; the PCC may
+			withdraw the delegation or the PCE may give up the delegation.</t>
+		  </list>
+		  </t>
+	  
+	  
+	  <t><xref target='I-D.sivabalan-pce-disco-stateful'></xref> defines the extensions 
+	  needed to support autodiscovery of stateful PCEs when using the IGPs for PCE discovery.</t> 
+	  
+	</section>
+	
+	 <section anchor="Deployment-considerations" title="Deployment considerations">
+
+	 <t> This section discusses generic issues with Stateful PCE deployments, and 
+	 how specific protocol mechanisms can be used to address them. 
+	 </t> 
+	 
+		 <section anchor="Mixed-deployment" title="Multi-PCE deployments">
+			<t>Stateless and stateful PCEs can co-exist in the same network and be in charge 
+			of path computation of different types. To solve the problem of distinguishing between 
+			the two types of PCEs, either discovery or configuration may be used. 
+			The capability negotiation in <xref target='I-D.ietf-pce-stateful-pce'></xref> ensures 
+			correct operation when the PCE address is configured on the PCC. 
+			</t>
+		 </section>
+		 
+		 <section anchor="LSP-DB-sync" title="LSP State Synchronization">
+			<t>A stateful PCE maintains two sets of information for use in path computation. 
+			The first is the Traffic Engineering Database (TED) which includes the topology and 
+			resource state in the network. This information can be obtained by a stateful PCE 
+			using the same mechanisms as a stateless PCE (see <xref target="RFC4655"/>). 
+			The second is the LSP State Database (LSP-DB), in which a PCE stores attributes of 
+			all active LSPs in the network, such as their paths through the network, 
+			bandwidth/resource usage, switching types and LSP constraints. The stateful 
+			PCE extensions defined in <xref target='I-D.ietf-pce-stateful-pce'></xref> 
+			support population of this database using information received from the network 
+			nodes via LSP State Report messages. 
+			Population of the LSP database via other means is not precluded. 
+			</t>
+		 </section>
+		 
+		 <section anchor="PCE-survivability" title="PCE Survivability">
+			<t> For a stateful PCE, an important issue is to get the LSP state information 
+			 resynchronized after a restart. <xref target='I-D.ietf-pce-stateful-pce'></xref> includes support of a 
+			 synchronization function, allowing the PCC to synchronize its LSP state with the PCE. This can be 
+			 applied equally to an Label Edge Router (LER) client or another PCE, allowing for support 
+			 of multiple ways of re-acquiring the LSP database on a restart. For example, the state can be 
+			 retrieved from the network nodes, or from another stateful PCE. Because synchronization may 
+			 also be skipped, if a PCE implementation has the means to retrieve its database in 
+			 a different way (for example from a backup copy stored locally), the state can be restored 
+			 without further overhead in the network. Note that locally recovering the state
+			 would still require some degree of resynchronization to ensure that the recovered state
+			 is indeed up-to-date. 
+			 </t> 
+		 </section> 
+	 </section> 
+
+	 
+	 <section anchor="Application-scenarios" title="Application scenarios">
+	     <t>In the following sections, several use cases are described, showcasing
+		 scenarios that benefit from the deployment of a stateful PCE. </t>
+	
+      <section anchor="Global-visibility" title="Optimization of LSP placement">
+	 
+		
+	  <t>The following use cases demonstrate a need for visibility into
+	  global inter-PCC LSP state in PCE path computations, and for a PCE
+	  control of sequence and timing in altering LSP path characteristics
+	  within and across PCEP sessions. Reference topologies for the use
+	  cases described later in this section are shown in Figures <xref
+	  target="Reference-topology-1" format="counter"/> and <xref
+	  target="Reference-topology-2" format="counter"/>.</t>
+
+	  <t>Some of the use cases below are focused on MPLS-TE deployments, but may
+	  also apply to GMPLS.
+	  Unless otherwise cited, use cases assume that all LSPs listed exist
+	  at the same LSP priority. </t> 
+	  
+	  <t>
+	  The main benefit in the cases below comes from moving away from an asynchronous
+	  PCC-driven mode of operation to a model that allows for central control over LSP
+	  computations and setup, and focuses specifically on the active stateful PCE model 
+	  of operation. </t>
+
+	  <figure anchor="Reference-topology-1" title="Reference topology 1">
+	  <artwork><![CDATA[
+       +-----+
+       |  A  |
+       +-----+
+              \
+               +-----+                      +-----+
+               |  C  |----------------------|  E  |
+               +-----+                      +-----+
+              /        \      +-----+      /
+       +-----+          +-----|  D  |-----+
+       |  B  |                +-----+
+       +-----+
+   	    ]]></artwork>
+	  </figure>
+
+	  <figure anchor="Reference-topology-2" title="Reference topology 2">
+	  <artwork><![CDATA[
+            +-----+        +-----+        +-----+
+            |  A  |        |  B  |        |  C  |
+            +--+--+        +--+--+        +--+--+
+               |              |              |
+               |              |              |
+            +--+--+        +--+--+        +--+--+
+            |  E  +--------+  F  +--------+  G  |
+            +-----+        +-----+        +-----+
+          
+   	    ]]></artwork>
+	  </figure>
+
+
+	  
+	  <section anchor="Bin-Packing" title="Throughput Maximization and Bin Packing">
+	    <t> Because LSP attribute changes in <xref target="RFC5440"/> are
+	    driven by PCReq messages under control of a PCC's local timers, the
+	    sequence of RSVP reservation arrivals occurring in the network will
+	    be randomized. This, coupled with a lack of global LSP state
+	    visibility on the part of a stateless PCE may result in suboptimal
+	    throughput in a given network topology, as will be shown in the example
+		below. 
+		</t>
+	    
+	    <t>Reference topology 2 in <xref target="Reference-topology-2"/> and
+	    Tables <xref target="Throughput-link-parameters" format="counter"/>
+	    and <xref target="Throughput-demand" format="counter"/> show an
+	    example in which throughput is at 50% of optimal as a result of lack
+	    of visibility and synchronized control across PCC's. In this
+	    scenario, the decision must be made as to whether to route any
+	    portion of the E-G demand, as any demand routed for this source and
+	    destination will decrease system throughput. </t>
+
+	    <texttable anchor="Throughput-link-parameters" 
+		       title="Link parameters for Throughput use case">
+	      <ttcol align="center">Link</ttcol>
+	      <ttcol align="center">Metric</ttcol>
+	      <ttcol align="center">Capacity</ttcol>
+	      <c>A-E</c><c>1</c><c>10</c>
+	      <c>B-F</c><c>1</c><c>10</c>
+	      <c>C-G</c><c>1</c><c>10</c>
+	      <c>E-F</c><c>1</c><c>10</c>
+	      <c>F-G</c><c>1</c><c>10</c>
+	    </texttable>
+
+	    <texttable anchor="Throughput-demand" 
+		       title="Throughput use case demand time series">
+	      <ttcol align="center">Time</ttcol>
+	      <ttcol align="center">LSP</ttcol>
+	      <ttcol align="center">Src</ttcol>
+	      <ttcol align="center">Dst</ttcol>
+	      <ttcol align="center">Demand</ttcol>
+	      <ttcol align="center">Routable</ttcol>
+	      <ttcol align="center">Path</ttcol>
+	      <c>1</c><c>1</c><c>E</c><c>G</c><c>10</c><c>Yes</c><c>E-F-G</c>
+	      <c>2</c><c>2</c><c>A</c><c>B</c><c>10</c><c>No</c><c>---</c>
+	      <c>3</c><c>1</c><c>F</c><c>C</c><c>10</c><c>No</c><c>---</c>
+	    </texttable>
+
+	    <t>In many cases throughput maximization becomes a bin packing
+	    problem. While bin packing itself is an NP-hard problem, a number of
+	    common heuristics which run in polynomial time can provide
+	    significant improvements in throughput over random reservation event
+	    distribution, especially when traversing links which are members of
+	    the minimum cut set for a large subset of source destination pairs.
+	    </t>
+
+	    <t>Tables <xref target="BinPack-link-parameters" format="counter"/>
+	    and <xref target="BinPack-demand" format="counter"/> show a simple
+	    use case using Reference Topology 1 in <xref
+	    target="Reference-topology-1"/>, where LSP state visibility and
+	    control of reservation order across PCCs would result in significant
+	    improvement in total throughput.</t>
+
+	    <texttable anchor="BinPack-link-parameters" 
+		       title="Link parameters for Bin Packing use case">
+	      <ttcol align="center">Link</ttcol>
+	      <ttcol align="center">Metric</ttcol>
+	      <ttcol align="center">Capacity</ttcol>
+	      <c>A-C</c><c>1</c><c>10</c>
+	      <c>B-C</c><c>1</c><c>10</c>
+	      <c>C-E</c><c>10</c><c>5</c>
+	      <c>C-D</c><c>1</c><c>10</c>
+	      <c>D-E</c><c>1</c><c>10</c>
+	    </texttable>
+
+	    <texttable anchor="BinPack-demand" 
+		       title="Bin Packing use case demand time series">
+	      <ttcol align="center">Time</ttcol>
+	      <ttcol align="center">LSP</ttcol>
+	      <ttcol align="center">Src</ttcol>
+	      <ttcol align="center">Dst</ttcol>
+	      <ttcol align="center">Demand</ttcol>
+	      <ttcol align="center">Routable</ttcol>
+	      <ttcol align="center">Path</ttcol>
+	      <c>1</c><c>1</c><c>A</c><c>E</c><c>5</c><c>Yes</c><c>A-C-D-E</c>
+	      <c>2</c><c>2</c><c>B</c><c>E</c><c>10</c><c>No</c><c>---</c>
+	    </texttable>
+
+	  </section>
+
+	  <section anchor="Deadlock" title="Deadlock">
+	    
+	    <t>This section discusses a use case of cross-LSP impact under 
+		degraded operation. Most existing RSVP-TE implementations will not tear down
+	    established LSPs in the event of the failure of the bandwidth
+	    increase procedure detailed in <xref target="RFC3209"/>. This
+	    behavior is directly implied to be correct in <xref
+	    target="RFC3209"/> and is often desirable from an operator's
+	    perspective, because either a) the destination prefixes are not
+	    reachable via any means other than MPLS or b) this would result in
+	    significant packet loss as demand is shifted to other LSPs in the
+	    overlay mesh.</t>
+
+	    <t>In addition, there are currently few implementations offering
+	    dynamic ingress admission control (policing of the traffic volume mapped onto an LSP)
+		at the LER. Having ingress
+	    admission control on a per LSP basis is not necessarily desirable
+	    from an operational perspective, as a) one must over-provision
+	    tunnels significantly in order to avoid deleterious effects
+	    resulting from stacked transport and flow control systems and b)
+	    there is currently no efficient commonly available northbound
+	    interface for dynamic configuration of per LSP ingress admission
+	    control (such an interface could easily be defined using the
+	    extensions for stateful PCE, but has not been yet at the time of this writing).</t>
+
+	    <t>Lack of ingress admission control coupled with the behavior in
+	    <xref target="RFC3209"/> may result in LSPs operating
+		out of profile for significant periods of time. It is reasonable to
+		expect that these out-of-profile LSPs will be operating in a degraded
+		state and experience traffic loss, but because they 
+		end up sharing common network interfaces with other LSPs operating within
+		their bandwidth reservations, they will end up impacting the operation
+		of the in-profile LSPs, even when there is unused network capacity elsewhere
+		in the network. Furthermore, this behavior will cause information loss 
+		in the TED with regards to the actual available bandwidth on the links 
+		used by the out-of-profile LSPs, as the reservations on the links no longer
+		reflect the capacity used.
+		</t>
+
+	    <t>Reference Topology 1 in <xref target="Reference-topology-1"/> and
+	    Tables <xref target="Deadlock-link-parameters" format="counter"/>
+	    and <xref target="Deadlock-demand" format="counter"/> show a use
+	    case that demonstrates this behavior. Two LSPs, LSP 1 and LSP 2 are
+	    signaled with demand 2 and routed along paths A-C-D-E and B-C-D-E
+	    respectively. At a later time, the demand of LSP 1 increases to
+	    20. Under such a demand, the LSP cannot be resignaled. However, the
+	    existing LSP will not be torn down. In the absence of ingress
+	    policing, traffic on LSP 1 will cause degradation for traffic of LSP
+	    2 (due to oversubscription on the links C-D and D-E), as well as
+	    information loss in the TED with regard to the actual network
+	    state.</t>
+
+	    <t>The problem could be easily ameliorated by global visibility of
+	    LSP state coupled with PCC-external demand measurements and
+	    placement of two LSPs on disjoint links. Note that while the demand
+	    of 20 for LSP 1 could never be satisfied in the given topology, what
+	    could be achieved would be isolation from the ill-effects of the
+	    (unsatisfiable) increased demand.</t>
+		
+		
+
+	    <texttable anchor="Deadlock-link-parameters" 
+		       title="Link parameters for the 'Degraded operation' example">
+	      <ttcol align="center">Link</ttcol>
+	      <ttcol align="center">Metric</ttcol>
+	      <ttcol align="center">Capacity</ttcol>
+	      <c>A-C</c><c>1</c><c>10</c>
+	      <c>B-C</c><c>1</c><c>10</c>
+	      <c>C-E</c><c>10</c><c>5</c>
+	      <c>C-D</c><c>1</c><c>10</c>
+	      <c>D-E</c><c>1</c><c>10</c>
+	    </texttable>
+
+	    <texttable anchor="Deadlock-demand" 
+		       title="Degraded operation demand time series">
+	      <ttcol align="center">Time</ttcol>
+	      <ttcol align="center">LSP</ttcol>
+	      <ttcol align="center">Src</ttcol>
+	      <ttcol align="center">Dst</ttcol>
+	      <ttcol align="center">Demand</ttcol>
+	      <ttcol align="center">Routable</ttcol>
+	      <ttcol align="center">Path</ttcol>
+	      <c>1</c><c>1</c><c>A</c><c>E</c><c>2</c><c>Yes</c><c>A-C-D-E</c>
+	      <c>2</c><c>2</c><c>B</c><c>E</c><c>2</c><c>Yes</c><c>B-C-D-E</c>
+	      <c>3</c><c>1</c><c>A</c><c>E</c><c>20</c><c>No</c><c>---</c>
+	    </texttable>
+	  </section>
+
+	  <section anchor="Minimum-Perturbation" title="Minimum Perturbation">
+	    <t>As a result of both the lack of visibility into global LSP state
+	    and the lack of control over event ordering across PCE sessions,
+	    unnecessary perturbations may be introduced into the network by a
+	    stateless PCE. Tables <xref target="Minimum-Perturbation-link-parms"
+	    format="counter"/> and <xref target="Minimum-Perturbation-LSPs"
+	    format="counter"/> show an example of an unnecessary network
+	    perturbation using Reference Topology 1 in <xref
+	    target="Reference-topology-1"/>.  In this case an unimportant (high
+	    LSP priority value) LSP (LSP1) is first set up along the shortest
+	    path.  At time 2, which is assumed to be relatively close to time 1,
+	    a second more important (lower LSP-priority value) LSP (LSP2) is
+	    established, preempting LSP1, potentially causing traffic loss. 
+		LSP1 is then reestablished on the longer A-C-E path.</t>
+
+	    <texttable anchor="Minimum-Perturbation-link-parms" 
+		       title="Link parameters for the 'Minimum-Perturbation' example">
+	      <ttcol align="center">Link</ttcol>
+	      <ttcol align="center">Metric</ttcol>
+	      <ttcol align="center">Capacity</ttcol>
+	      <c>A-C</c><c>1</c><c>10</c>
+	      <c>B-C</c><c>1</c><c>10</c>
+	      <c>C-E</c><c>10</c><c>10</c>
+	      <c>C-D</c><c>1</c><c>10</c>
+	      <c>D-E</c><c>1</c><c>10</c>
+	    </texttable>
+
+	    <texttable anchor="Minimum-Perturbation-LSPs" 
+		       title="Minimum-Perturbation LSP and demand time series">
+	      <ttcol align="center">Time</ttcol>
+	      <ttcol align="center">LSP</ttcol>
+	      <ttcol align="center">Src</ttcol>
+	      <ttcol align="center">Dst</ttcol>
+	      <ttcol align="center">Demand</ttcol>
+	      <ttcol align="center">LSP Prio</ttcol>
+	      <ttcol align="center">Routable</ttcol>
+	      <ttcol align="center">Path</ttcol>
+	      <c>1</c><c>1</c><c>A</c><c>E</c><c>7</c><c>7</c><c>Yes</c><c>A-C-D-E</c>
+	      <c>2</c><c>2</c><c>B</c><c>E</c><c>7</c><c>0</c><c>Yes</c><c>B-C-D-E</c>
+	      <c>3</c><c>1</c><c>A</c><c>E</c><c>7</c><c>7</c><c>Yes</c><c>A-C-E</c>
+	    </texttable>
+		
+		<t> A stateful PCE can help in this scenario by evaluating both 
+		requests at the same time (due to their  proximity in time). This will ensure 
+		placement of the more important LSP along the shortest path, avoiding the 
+		preemption of the lower priority LSP. </t> 
+	  </section>
+
+	  <section anchor="Predictability" title="Predictability">
+	    <t>Randomization of reservation events caused by lack of control
+	    over event ordering across PCE sessions results in poor
+	    predictability in LSP routing. An offline system applying a
+	    consistent optimization method will produce predictable results to
+	    within either the boundary of forecast error when reservations are
+	    over-provisioned by reasonable margins or to the variability of the
+	    signal and the forecast error when applying some hysteresis in order
+	    to minimize churn. Predictable results are valuable for being able to
+		simulate the network and reliably test it under various scenarios, especially under various
+            failure modes and planned maintenances when predictable path characteristics are desired
+            under contention for network resources.</t>
+
+	    <t>Reference Topology 1 and Tables <xref
+	    target="Predictability-link-parameters" format="counter"/>, <xref
+	    target="Predictability-LSPs-1" format="counter"/> and <xref
+	    target="Predictability-LSPs-2" format="counter"/> show the impact of
+	    event ordering and predictability of LSP routing.</t>
+
+	    <texttable anchor="Predictability-link-parameters" 
+		       title="Link parameters for the 'Predictability' example">
+	      <ttcol align="center">Link</ttcol>
+	      <ttcol align="center">Metric</ttcol>
+	      <ttcol align="center">Capacity</ttcol>
+	      <c>A-C</c><c>1</c><c>10</c>
+	      <c>B-C</c><c>1</c><c>10</c>
+	      <c>C-E</c><c>1</c><c>10</c>
+	      <c>C-D</c><c>1</c><c>10</c>
+	      <c>D-E</c><c>1</c><c>10</c>
+	    </texttable>
+
+	    <texttable anchor="Predictability-LSPs-1" 
+		       title="Predictability LSP and demand time series 1">
+	      <ttcol align="center">Time</ttcol>
+	      <ttcol align="center">LSP</ttcol>
+	      <ttcol align="center">Src</ttcol>
+	      <ttcol align="center">Dst</ttcol>
+	      <ttcol align="center">Demand</ttcol>
+	      <ttcol align="center">Routable</ttcol>
+	      <ttcol align="center">Path</ttcol>
+	      <c>1</c><c>1</c><c>A</c><c>E</c><c>7</c><c>Yes</c><c>A-C-E</c>
+	      <c>2</c><c>2</c><c>B</c><c>E</c><c>7</c><c>Yes</c><c>B-C-D-E</c>
+	    </texttable>
+
+	    <texttable anchor="Predictability-LSPs-2" 
+		       title="Predictability LSP and demand time series 2">
+	      <ttcol align="center">Time</ttcol>
+	      <ttcol align="center">LSP</ttcol>
+	      <ttcol align="center">Src</ttcol>
+	      <ttcol align="center">Dst</ttcol>
+	      <ttcol align="center">Demand</ttcol>
+	      <ttcol align="center">Routable</ttcol>
+	      <ttcol align="center">Path</ttcol>
+	      <c>1</c><c>2</c><c>B</c><c>E</c><c>7</c><c>Yes</c><c>B-C-E</c>
+	      <c>2</c><c>1</c><c>A</c><c>E</c><c>7</c><c>Yes</c><c>A-C-D-E</c>
+	    </texttable>
+	  <t> As can be shown in the example, both LSPs were routed in both cases, 
+	  but along very different paths. This would be a challenge if reliable simulation
+	  of the network was attempted. A stateful PCE can solve this through control over 
+	  LSP ordering.</t> 
+	
+	  
+	  </section>
+
+	  </section>
+	  
+	   
+	 <section anchor="bw-adjustment" title="Auto-bandwidth Adjustment">
+		<t>
+		The bandwidth requirement of LSPs often change over time, requiring resizing the LSP. Currently
+		the head-end node performs this function by monitoring the actual bandwidth usage, triggering
+		a recomputation and resignaling when a threshold is reached. This operation is referred as
+		auto-bandwidth adjustment. The head-end node either recomputes the path locally, or it requests a 
+		recomputation from a PCE by sending a PCReq message. In the latter case, the PCE computes 
+		a new path and provides the new route suggestion. Upon receiving the reply from the PCE, the 
+		PCC re-signals the LSP in Shared-Explicit (SE) mode along the newly computed path.  
+		If a passive stateful PCE is used, only the new bandwidth information is needed to trigger a
+		path re-computation since the LSP information is already known to the PCE. Note that in this scenario, 
+		the head-end node is the one that drives the LSP resizing based on local information, and that 
+		the difference between using a stateless and a passive stateful PCE is in the level of optimization of 
+		the LSP placement as discussed in the previous section. </t> 
+		
+		<t> A more interesting smart bandwidth adjustment case is one where the LSP resizing decision
+		is done by an external entity, with access to additional information such as historical trending 
+		data, application-specific information about expected demands or policy information, as well
+		as knowledge of the actual desired flow volumes. In this case
+		an active stateful PCE provides an advantage in both the computation with 
+		knowledge of all LSPs in the domain and in 
+		the ability to trigger bandwidth modification of the LSP. 
+		</t>		
+	 </section>
+	 
+	 <section anchor="BW-cal" title="Bandwidth Scheduling">
+		
+		
+		<t> Bandwidth scheduling allows network operators to reserve resources in advance 
+		according to the agreements with their customers, and allow them 
+		to transmit data with specified starting
+		time and duration, for example for a scheduled bulk data replication
+		between data centers. </t>
+		
+		<t> Traditionally, this can be supported by NMS operation through path pre-establishment
+		and activation on the agreed starting time. However, this does not provide efficient 
+		network usage since the established paths exclude the possibility of being used by other 
+		services even when they are not used for undertaking any service. It can also be accomplished 
+		through GMPLS protocol extensions by carrying the related request information (e.g., 
+		starting time and duration) across the network. Nevertheless, this method inevitably 
+		increases the complexity of signaling and routing process. </t>
+			
+		<t> A passive stateful PCE can support this application with better efficiency since it can 
+		alleviate the burden of processing on network elements. This requires the PCE to maintain 
+		the scheduled
+		LSPs and their associated resource usage, as well as the ability of head-ends to trigger
+		signaling for LSP setup/deletion at the correct time. This approach requires coarse time 
+		synchronization between PCEs and
+		PCCs. If an active stateful PCE is available, the PCE can trigger the setup/deletion 
+		of scheduled requests in 
+		a centralized manner, without modification of existing head-end behaviors.</t> 
+	 </section>
+ 	
+	<section anchor="recovery" title="Recovery">
+	
+		
+	<t> The recovery use cases discussed in the following sections show how leveraging a stateful PCE 
+     can simplify the computation of recovery path(s). In particular, two characteristics 
+	of a stateful PCE are used: 1) using information stored in the LSP-DB for determining shared protection resources
+	and 2) performing computations with	knowledge of all LSPs in a domain. </t>
+	
+		<section anchor="protection" title="Protection">
+		<t>
+		For protection purposes, a PCC may send a request to a PCE for computing a set of paths for a 
+		given LSP. Alternatively, the PCC can send multiple requests to the PCE, asking for working 
+		and backup LSPs separately. Either way, the resources bound to backup paths can be shared by 
+		different LSPs to improve the overall network efficiency, such as m:n protection or 
+		pre-configured shared mesh recovery techniques as specified in <xref target="RFC4427"/>. 
+		If resource sharing 
+		is supported for LSP protection, the information relating to existing LSPs is required to avoid 
+		allocation of shared protection resources to two LSPs that might fail together and
+		cause protection contention issues. A stateless PCE can accommodate this use case by 
+		having the PCC pass in this information as a constraint to the path computation request.
+		A stateful PCE can more easily accommodate this need using the information stored in its LSP-DB. 
+		</t>
+		
+		<figure anchor="Reference-topology-3" title="Reference topology 3">
+	  <artwork><![CDATA[
+              +----+  
+              |PCE |  
+              +----+  
+              
+         +------+          +------+          +------+
+         |  N1  +----------+  N2  +----------+  N3  |
+         +--+---+          +---+--+          +---+--+
+            |                  |                 |
+            |        +---------+                 |
+            |        |                           |
+            |     +--+---+          +------+     |
+            +-----+  N5  +----------+  N4  +-----+
+                  +------+          +------+
+
+   	    ]]></artwork>
+	  </figure>
+	  
+	  <t> 
+	  For example, in the network depicted in  Figure <xref target="Reference-topology-3" format="counter"/> , 
+	  suppose there exists LSP1 with working path 
+	  LSP1_working following N1->N5 and with backup path LSP1_backup following N1->N2->N5. 
+	  A request arrives asking for a working and backup path pair to be 
+	  computed for LSP2, for a request from N2 to N5. If the PCE decides LSP2_working follows N2->N1->N5, 
+	  then the backup path LSP2_backup should not use the same protection resource with LSP1 
+	  since LSP2
+	  shares part of its resource (specifically N1->N5) with LSP1 (i.e., these two LSPs are in 
+	  the same shared risk group). 
+	  Alternatively, there is no such constraint if N2->N3->N4->N5 is chosen for LSP2_working.
+	  </t> 
+	  
+	 <t> If a stateless PCE is used, the head node N2 needs to be aware of the existence 
+	 of LSPs which share the route of LSP2_working and of the details of their 
+	 protection resources. N2 must pass this information to the PCE as a constraint 
+	 so as to request a path with SRLG diversity. On the other hand, a stateful PCE
+	 can get the LSPs information by itself and can achieve the goal of finding SRLG-diversified 
+	 protection paths for both LSPs. This is made possible by comparing the LSP resource 
+	 usage exploiting the LSP DB accessible by the stateful PCE. </t>
+	 	
+		
+		</section>
+		
+		
+		<section anchor="restoration" title="Restoration">
+			
+		<t>
+		In case of a link failure, such as fiber cut, multiple LSPs may fail at the same time. Thus, 
+		the source nodes of the affected LSPs will be informed of the failure by the nodes detecting the 
+		failure. These source nodes will send requests to a PCE for rerouting. In order to reuse the 
+		resource taken by an existing LSP, the source node can send a PCReq message including the 
+		XRO object with F bit set, together with RRO object, as specified in <xref target="RFC5521"/>.
+		</t>
+		
+		<t>
+		If a stateless PCE is exploited, it might respond to the rerouting requests separately if they 
+		arrive at different times. Thus, it might result in sub-optimal resource usage. Even worse, 
+		it might unnecessarily block some of the rerouting requests due to insufficient resources for 
+		later-arrived rerouting messages. If a stateful PCE is used to fulfill this task, it can 
+		re-compute the affected LSPs concurrently while reusing part of the existing LSPs resources 
+		when it is informed of the failed link identifier provided by the first request. This is made 
+		possible since the stateful PCE can check what other LSPs are affected by the failed link and 
+		their route information by inspecting its LSP-DB. As a result, a better performance, such as 
+		better resource usage, minimal probability of blocking upcoming new rerouting requests sent 
+		as a result of the link failure, can be achieved. 
+		</t>
+		
+		<t>
+		In order to further reduce the amount of LSP rerouting messages flow in the network, the 
+		notification can be performed at the node(s) which detect the link failure. For example, 
+		suppose there are two LSPs in the network as shown in Figure <xref
+	        target="Reference-topology-3" format="counter"/>: (i) LSP1: N1->N5->N4->N3; 
+		(ii) LSP2:  N2->N5->N4. They traverse the failed link between N5-N4. When N4 detects the failure, 
+		it can send a notification message to a stateful PCE. Note that the stateful PCE stores the 
+		path information of the LSPs that are affected by the link failure, so it does not need 
+		to acquire this information from N4. Moreover, it can make use of the bandwidth resources occupied
+		by the affected LSPs when performing path recalculation. After N4 receives the new paths from the PCE,
+		it notifies the ingress nodes of the LSPs, i.e., N1 and N2, 
+		and specifies the new paths which should be used as the rerouting paths. To support this, it would 
+		require extensions to the existing signaling protocols.
+		</t>
+		
+		<t>
+		Alternatively, if the target is to avoid resource contention within the time-window of high LSP 
+		requests, a stateful PCE can retain the under-construction LSP resource usage information for 
+		a given time and exclude it from being used for forthcoming LSPs request. In this way, 
+		it can ensure that the resource will not be double-booked and thus the issue of resource 
+		contention and computation crank-backs can be resolved. 
+		</t>
+		</section>	
+		
+		<section anchor="srlg-diversity" title="SRLG Diversity">
+		<t>
+		An alternative way to achieve efficient resilience is to maintain SRLG disjointness between LSPs, irrespective
+		of whether these LSPs share the source and destination nodes or not. This can be achieved at provisioning time, 
+		if the routes of all the LSPs are requested together, 
+		using a synchronized computation of the different LSPs with SRLG disjointness constraint. If the LSPs 
+		need to be provisioned at different times (more general, the routes are requested at different times, 
+		e.g. in the case of a restoration), the PCC can specify, as constraints to the path computation a set 
+		of Shared Risk Link Groups (SRLGs) using the Explicit Route Object 
+		<xref target="RFC5521"/>. However, for the latter to be effective, it is needed that the entity 
+		that requests the route to the PCE maintains updated SRLG information of all the LSPs to which 
+		it must maintain the disjointness. A stateless PCE can compute an SRLG-disjoint path by inspecting
+		the TED and precluding the links with the same SRLG values specified in the PCReq message sent by a PCC. 
+		</t>
+		<t>
+		A stateful PCE maintains the updated SRLG information of the established LSPs 
+		in a centralized manner. Therefore, the PCC can specify
+		as constraints to the path computation the SRLG disjointness of a set of already 
+		established LSPs by only providing the LSP identifiers.
+		</t>
+	
+		
+		</section>
+	</section>
+				
+	
+	<section anchor="VNT" title="Maintenance of Virtual Network Topology (VNT)">
+	
+	
+	<t> 
+	In Multi-Layer Networks (MLN), a Virtual Network Topology (VNT) 
+	<xref target="RFC5212"/> consists of a set of one or more TE LSPs in the lower 
+	layer which provides TE links to the upper layer. In 
+	<xref target="RFC5623"/>, the PCE-based architecture is proposed to
+	support path computation in MLN networks in order to achieve inter-layer TE. 
+	</t>
+	
+	<t>
+	The establishment/teardown of a TE link in VNT needs to take into consideration the state 
+	of existing LSPs and/or new LSP request(s) in the higher layer. As specified in 
+	<xref target="RFC5623"/>, a VNT manager (VNTM) is in charge
+	of setting up connections in the lower layer to provide TE links
+    for upper layer. Hence, when a stateless PCE cannot find the route for a 
+	request based on the upper layer topology information, it needs to interact 
+	with the VNTM and rely on the VNTM to decide whether to set up or remove a 
+	TE link or not. On the other hand, a stateful PCE can make the decision of 
+	when and how to modify the VNT either to accommodate new LSP requests or 
+	to re-optimize resource usage across layers irrespective of the PCE models as
+	described in <xref target="RFC5623"/>.
+	</t> 
+	</section>
+	
+	<section anchor="Reoptimization" title="LSP Re-optimization">
+	
+	 <t>
+          In order to make efficient usage of network resources,
+          it is sometimes desirable to re-optimize one or more 
+		  LSPs dynamically.
+          In the case of a stateless PCE, in order to optimize network
+          resource usage dynamically through online planning, a PCC
+          must send a request to the PCE together with
+          detailed path/bandwidth information of the LSPs that need to
+          be concurrently optimized. This means the PCC must be able 
+		  to determine when and which LSPs should be
+          optimized. 
+		  In the case of a stateful PCE, given the LSP state information
+          in the LSP database, the process of dynamic optimization of 
+		  network resources can be automated 
+          without requiring the PCC to supply LSP state
+          information or to trigger the request. Moreover, since a stateful 
+		  PCE can maintain
+          information for all LSPs that are in the process of 
+		  being set up and since it may have the ability to control timing and 
+		  sequence of LSP setup/deletion, the optimization procedures can be performed
+          more intelligently and effectively. 
+        </t>
+		
+        <t>
+          A special case of LSP re-optimization is Global Concurrent Optimization (GCO) <xref target="RFC5557" />. 
+          Global control of LSP operation sequence in <xref
+          target="RFC5557" /> is predicated on the use of what is
+          effectively a stateful (or semi-stateful) NMS. The NMS can
+          be either not local to the switch, in which case another
+          northbound interface is required for LSP attribute changes,
+          or local/collocated, in which case there are significant
+          issues with efficiency in resource usage. 
+
+          A stateful PCE adds a few features that:
+          <list style="symbols">
+            <t>  Roll the NMS visibility into the PCE and remove the 
+			requirement for an additional northbound interface</t>
+            <t> Allow the PCE to determine when re-optimization is 
+			needed, with which level (GCO or a more incremental optimization) </t>
+	        <t>Allow the PCE to determine which LSPs should be re-optimized</t>
+            <t> Allow a PCE to control the sequence of events across multiple  
+			PCCs, allowing for bulk (and truly global) optimization, LSP shuffling etc.</t>
+          </list>
+        </t>
+	</section>
+	
+	<section anchor="flex-grid" title="Resource Defragmentation">
+		<t>
+		In networks with link bundles, if LSPs are dynamically allocated and released over time, 
+		the resource becomes fragmented. The overall available resource on a (bundle) link might 
+		be sufficient for a new LSP request, but if the available resource is not continuous, 
+		the request is rejected. In order to perform the defragmentation procedure, 
+		stateful PCEs cam be used, since global visibility of LSPs in the network is required to accurately 
+		assess resources on the LSPs, and perform de-fragmentation while ensuring a minimal 
+		disruption of the network. This use case cannot be accommodated
+		by a stateless PCE since it does not possess the detailed information of existing LSPs in the network. 
+		</t>
+		
+		<t>
+		A case of particular interest to GMPLS-based transport networks is the frequency 
+		defragmentation in flexible grid. In Flexible grid networks <xref target="I-D.ogrcetal-ccamp-flexi-grid-fwk"/>,
+		LSPs with different slot widths (such as 12.5G, 25G etc.) can co-exist so as to accommodate the 
+		services with different bandwidth requests. Therefore, even if the overall spectrum can 
+		meet the service request, it may not be usable if it is not contiguous. Thus, with the 
+		help of existing LSP state information, stateful PCE can make the resource grouped 
+		together to be usable. Moreover, stateful PCE can proactively choose routes for upcoming 
+		path requests to reduce the chance of spectrum fragmentation.
+		</t>
+	</section>
+		
+	<section anchor="Impairment" title="Impairment-Aware Routing and Wavelength Assignment (IA-RWA)">
+		<t>In WSONs  <xref target="RFC6163"/>, a wavelength-switched LSP traverses one or more fiber links. 
+		The bit rates of the client signals carried by the wavelength LSPs may be the same or different.
+		Hence, a fiber link may transmit a number of wavelength LSPs with equal or mixed bit rate signals.
+		For example, a fiber link may multiplex the wavelengths with only 10G signals, mixed 10G and 
+		40G signals, or mixed 40G and 100G signals. </t>
+		
+		<t> IA-RWA in WSONs refers to the RWA process (i.e., lightpath computation) that takes 
+		into account the optical layer/transmission imperfections by considering as additional 
+		(i.e., physical layer) constraints. To be more specific, linear and non-linear effects 
+		associated with the optical network elements should be incorporated into the route and 
+		wavelength assignment procedure. For example, the physical imperfection can result in 
+		the interference of two adjacent lightpaths. Thus, a guard band should be reserved between 
+		them to alleviate these effects. The width of the guard band between two adjacent wavelengths 
+		depends on their characteristics, such as modulation formats and bit rates. Two adjacent 
+		wavelengths with different characteristics (e.g., different bit rates) may need a wider guard 
+		band and with same characteristics may need a narrower guard band. For example, 
+		50GHz spacing may be acceptable for two adjacent wavelengths with 40G signals. But for 
+		two adjacent wavelengths with different bit rates (e.g., 10G and 40G), a larger spacing 
+		such as 300GHz spacing may be needed. Hence, the characteristics (states) of the existing 
+		wavelength LSPs should be considered for a new RWA request in WSON. </t>
+		
+		<t> In summary, when stateful PCEs are used to perform the IA-RWA procedure, they need to 
+		know the characteristics of the existing wavelength LSPs. The impairment information relating 
+		to existing and to-be-established LSPs can be obtained by nodes in WSON networks via external 
+		configuration or other means such as monitoring or estimation based on a vendor-specific 
+		impair model. However, WSON related routing protocols, i.e.,  <xref target="I-D.ietf-ccamp-wson-signal-compatibility-ospf" />
+		and  <xref target="I-D.ietf-ccamp-gmpls-general-constraints-ospf-te" />, 
+		only advertise limited information (i.e., availability) of the existing wavelengths, 
+		without defining the supported client bit rates. It will incur substantial amount of control 
+		plane overhead if routing protocols are extended to support dissemination of the new 
+		information relevant for the IA-RWA process. In this scenario, stateful PCE(s) would be a more 
+		appropriate mechanism to solve this problem. Stateful PCE(s) can exploit impairment 
+		information of LSPs stored in LSP-DB to provide accurate RWA calculation. </t>
+	</section> 
+
+  </section>
+   <section anchor="Security" title="Security Considerations">
+    <t> This document does not introduce any new security considerations 
+	beyond those discussed in <xref target="I-D.ietf-pce-stateful-pce"/>. </t>
+	
+	<t> The following topics will be discussed in a future version of this 
+	document: whether use of a stateful PCE makes the network more or less
+	secure, and security use cases if any. </t> 
+	
+   </section>
+
+   <section anchor="Contributing-authors" title="Contributing Authors">
+    <t>
+	The following people all contributed significantly to this document and are listed below in alphabetical order:
+    </t>
+    <t>
+   Ramon Casellas<vspace blankLines='0'/>
+   CTTC - Centre Tecnologic de Telecomunicacions de Catalunya<vspace blankLines='0'/>
+   Av. Carl Friedrich Gauss n7<vspace blankLines='0'/>
+   Castelldefels, Barcelona 08860<vspace blankLines='0'/>
+   Spain<vspace blankLines='0'/>
+   Email: ramon.casellas@cttc.es<vspace blankLines='0'/>
+    </t>
+    <t>
+   Edward Crabbe<vspace blankLines='0'/>
+   Google, Inc.<vspace blankLines='0'/>
+   1600 Amphitheatre Parkway<vspace blankLines='0'/>
+   Mountain View, CA  94043<vspace blankLines='0'/>
+   US<vspace blankLines='0'/>
+   Email: edc@google.com<vspace blankLines='0'/>
+    </t>
+    <t>
+   Dhruv Dhody<vspace blankLines='0'/>
+   Huawei Technology<vspace blankLines='0'/>
+   Leela Palace<vspace blankLines='0'/>
+   Bangalore, Karnataka 560008<vspace blankLines='0'/>
+   INDIA<vspace blankLines='0'/>
+   EMail: dhruvd@huawei.com<vspace blankLines='0'/>
+    </t>
+    <t>
+   Oscar Gonzalez de Dios<vspace blankLines='0'/>
+   Telefonica Investigacion y Desarrollo<vspace blankLines='0'/>
+   Emilio Vargas 6<vspace blankLines='0'/>
+   Madrid,   28045<vspace blankLines='0'/>
+   Spain<vspace blankLines='0'/>
+   Phone: +34 913374013<vspace blankLines='0'/>
+   Email: ogondio@tid.es<vspace blankLines='0'/>
+    </t>
+    <t>
+   Young Lee<vspace blankLines='0'/>
+   Huawei<vspace blankLines='0'/>
+   1700 Alma Drive, Suite 100<vspace blankLines='0'/>
+   Plano, TX  75075<vspace blankLines='0'/>
+   US<vspace blankLines='0'/>
+   Phone: +1 972 509 5599 x2240<vspace blankLines='0'/>
+   Fax:   +1 469 229 5397<vspace blankLines='0'/>
+   EMail: ylee@huawei.com<vspace blankLines='0'/>
+    </t>
+    <t>
+   Jan Medved<vspace blankLines='0'/>
+   Cisco Systems, Inc.<vspace blankLines='0'/>
+   170 West Tasman Dr.<vspace blankLines='0'/>
+   San Jose, CA  95134<vspace blankLines='0'/>
+   US<vspace blankLines='0'/>
+   Email: jmedved@cisco.com<vspace blankLines='0'/>
+    </t>
+    <t>
+   Robert Varga<vspace blankLines='0'/>
+   Pantheon Technologies LLC<vspace blankLines='0'/>
+   Mlynske Nivy 56<vspace blankLines='0'/>
+   Bratislava  821 05<vspace blankLines='0'/>
+   Slovakia<vspace blankLines='0'/>
+   Email: robert.varga@pantheon.sk<vspace blankLines='0'/>     
+    </t>
+    <t>
+   Fatai Zhang<vspace blankLines='0'/>
+   Huawei Technologies<vspace blankLines='0'/>
+   F3-5-B R&amp;D Center, Huawei Base<vspace blankLines='0'/>
+   Bantian, Longgang District<vspace blankLines='0'/>
+   Shenzhen 518129 P.R.China<vspace blankLines='0'/>
+   Phone: +86-755-28972912<vspace blankLines='0'/>
+   Email: zhangfatai@huawei.com<vspace blankLines='0'/>
+    </t>
+    <t>
+   Xiaobing Zi<vspace blankLines='0'/>
+   Email: unknown<vspace blankLines='0'/>
+    </t>
+</section>
+   <section anchor="Acknowledgements" title="Acknowledgements">
+     <t>
+	 We would like to thank Cyril Margaria, Adrian Farrel and JP Vasseur for the useful comments and discussions.
+	 </t>
+    </section>
+	</middle>
+
+  <back>
+    <references title="Normative References">
+	  <?rfc include="reference.I-D.ietf-pce-stateful-pce"?>
+	  <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.4655.xml"?>
+      <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5440.xml"?>
+   </references>
+  
+
+   <references title="Informative References">
+     <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.3209.xml"?>
+     <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.4427.xml"?>
+     <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.4657.xml"?>
+	 <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5212.xml"?>
+     <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5394.xml"?>
+	 <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5521.xml"?>
+     <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5557.xml"?>
+	 <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5623.xml"?>
+	 <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.6163.xml"?>
+	 <?rfc include="reference.I-D.ietf-pce-gmpls-pcep-extensions"?>
+	 <?rfc include="reference.I-D.crabbe-pce-stateful-pce-mpls-te"?>
+	 <?rfc include="reference.I-D.sivabalan-pce-disco-stateful"?>
+	 <?rfc include="http://xml.resource.org/public/rfc/bibxml3/reference.I-D.ogrcetal-ccamp-flexi-grid-fwk"?> 
+	 <?rfc include="http://xml.resource.org/public/rfc/bibxml3/reference.I-D.ietf-ccamp-wson-signal-compatibility-ospf"?>
+     <?rfc include="http://xml.resource.org/public/rfc/bibxml3/reference.I-D.ietf-ccamp-gmpls-general-constraints-ospf-te"?>
+      
+	 
+
+      <reference anchor="MXMN-TE" target=""> 
+       <front>
+	 <title>Practical linear programming algorithm for balancing the max-min
+	 fairness and throughput objectives in traffic engineering</title>
+	 <author initials="E" surname="Danna" fullname="Emilie Danna">
+	   <organization>Google, Inc.</organization> 
+	 </author>
+	 <author initials="S" surname="Mandal" fullname="Subhasree Mandal">
+	   <organization>Google, Inc.</organization> 
+	 </author>
+	 <author initials="A" surname="Singh" fullname="Arjun Singh">
+	   <organization>Google, Inc.</organization> 
+	 </author>
+	 <date year="2011" />
+       </front>
+       <seriesInfo name="" value="pre-print" /> 
+     </reference>
+
+    <reference anchor="MPLS-PC" target=""> 
+       <front>
+	 <title>Improved MPLS-TE LSP Path Computation using Preemption</title>
+	 <author initials="I" surname="Chaieb" fullname="Imene Chaieb">
+	   <organization>France Telecom R&amp;D</organization> 
+	 </author>
+	 <author initials="JL" surname="Le Roux" fullname="Jean-Louis Le Roux">
+	   <organization>France Telecom R&amp;D</organization> 
+	 </author>
+	 <author initials="B" surname="Cousin" fullname="Bernard Cousin">
+	   <organization>IRISA, Universite de Rennes</organization> 
+	 </author>
+	 <date month="July" year="2007" />
+       </front>
+       <seriesInfo name="" value="Global Information Infrastructure Symposium" /> 
+     </reference>
+
+     <reference anchor="NET-REC" target=""> 
+       <front>
+	 <title>Network Recovery: Protection and Restoration of Optical, SONET-SDH, IP, 
+	 and MPLS</title>
+	 <author initials="JP" surname="Vasseur" fullname="Jean-Philippe Vasseur">
+	 </author>
+	 <author initials="M" surname="Pickavet" fullname="Mario Pickavet">
+	 </author>
+	 <author initials="P" surname="Demeester" fullname="Piet Demeester">
+	 </author>
+	 <date day="30" month="June" year="2004" />
+       </front>
+       <seriesInfo name="" value="The Morgan Kaufmann Series in Networking" /> 
+     </reference>
+   </references>
+  
+<section title="Editorial notes and open issues">
+	
+	<t> This section will be removed prior to publication. </t> 
+	
+	<t> The following open issues remain:
+		 <list style="hanging">
+			
+			<t hangText="Use cases from draft-ietf-pce-stateful-pce"> To avoid loss 
+			of information, the use cases will be removed from <xref target='I-D.ietf-pce-stateful-pce'></xref>
+			only after this document becomes a working group document. </t>
+			
+			
+		</list> 
+	</t>
+	
+	<t> This document WILL NOT repeat terminology defined in other documents or attempt to place any 
+	additional requirements on stateful PCE. </t> 
+	</section> 
+	
+  </back>
+  
+</rfc>
