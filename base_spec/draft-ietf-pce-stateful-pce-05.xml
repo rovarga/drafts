@@ -70,7 +70,7 @@
 	<email>robert.varga@pantheon.sk</email>
       </address>
     </author>
-    <date day="14" month="May" year="2013" />
+    <date day="24" month="June" year="2013" />
 
     <workgroup>Network Working Group</workgroup>
 
@@ -127,12 +127,25 @@
       <t>The following terms are defined in this document:
 
       <list style="hanging">
+	  
+	<t hangText="Stateful PCE:"> has access to not only the network state, 
+	  but also to the set of active paths and their reserved resources for its
+      computations. A stateful PCE might also retain information regarding LSPs
+	  under construction in order to reduce churn and resource contention. 
+	  The additional state
+	  allows the PCE to compute constrained paths while considering individual LSPs 
+	  and their interactions. Note that this requires reliable state synchronization mechanisms
+	  between the PCE and the network, PCE and PCC, and between cooperating PCEs. 
+	  </t> 
+	
 	<t hangText="Passive Stateful PCE:"> uses LSP state information learned
 	from PCCs to optimize path computations. It does not actively update LSP
 	state. A PCC maintains synchronization with the PCE.</t>
 
-	<t hangText="Active Stateful PCE:"> is an extension of Passive Stateful PCE, which
-     utilizes the Delegation mechanism to update LSP parameters 
+	<t hangText="Active Stateful PCE:"> is an extension of Passive Stateful PCE, 
+	in which the PCE may issue recommendations to the network. For example, 
+	an active stateful PCE may 
+     utilize the Delegation mechanism to update LSP parameters 
      in those PCCs that delegated control over their LSPs to the PCE.</t>
 
 	<t hangText="Delegation:">An operation to grant a PCE temporary rights
@@ -149,16 +162,22 @@
 	<t hangText="Redelegation Timeout Interval:"> when a PCEP session is
 	terminated, a PCC waits for this time period before revoking LSP
 	delegation to a PCE and attempting to redelegate LSPs associated with the terminated
-	PCEP session to an alternate PCE. The redelegation timeout interval is a PCC-local value that 
+	PCEP session to an alternate PCE. The Redelegation Timeout Interval is a PCC-local value that 
 	can be either operator-configured or dynamically computed by the PCC based on 
 	local policy. </t>
 	
 	<t hangText="State Timeout Interval:"> when a PCEP session is
 	terminated, a PCC waits for this time period before flushing LSP state associated
-	with the PCEP session.  During this interval, an LSP may be redelegated to another 
-	PCE, preventing the flushing of LSP state.  The State Timeout Interval is a 
+	with that PCEP session and reverting to operator-defined default
+    parameters. The state will not be flushed in two cases: a) the LSP is redelegated to another 
+	PCE before the expiration fo the State Timeout Interval or b)the PCC makes changes to the 
+	LSP state.
+	The State Timeout Interval is a 
 	PCC-local value that can be either operator-configured or dynamically computed by the PCC 
-	based on local policy. </t>
+	based on local policy. The State Timeout Interval value SHOULD be greater than or equal to the 
+	Redelegation Timeout Interval value in order to allow for 
+	redelegation of LSPs without unnecessary churn in or loss of state. </t> 
+
  
 	<t hangText="LSP State Report:"> an operation to send LSP state
 	(Operational / Admin Status, LSP attributes configured and set by a PCE,
@@ -196,6 +215,15 @@
     </section>
 
     <section anchor="Motivation-And-Objectives" title="Motivation and Objectives for Stateful PCE">
+	<t> 
+	Editor's note: the content in this section is duplicated in 
+	<xref target='I-D.zhang-pce-stateful-pce-app'></xref>. 
+	To avoid loss 
+	of information, the use cases will be removed from this document only after
+	<xref target='I-D.zhang-pce-stateful-pce-app'></xref> becomes a working group document.
+	In the meantime, changes and updates to the use cases are reflected in 
+	<xref target='I-D.zhang-pce-stateful-pce-app'></xref>. 
+	</t> 
       <section anchor="Motivation" title="Motivation">
 	 <t>In the following sections, several use cases are described, showcasing
 	 scenarios that benefit from the deployment of a stateful PCE. The scenarios apply equally to 
@@ -819,9 +847,11 @@
 
 	<t>LSP delegation and LSP update operations defined in this document MAY
 	only be used if both PCEP Speakers set the LSP-UPDATE Flag in the
-	"Stateful Capability" TLV to 'Updates Allowed (U Flag = 1)', otherwise a
+	"Stateful Capability" TLV to 'Updates Allowed (U Flag = 1)'. If this is not 
+	the case and LSP delegation or
+	LSP update operations are attempted, then a
 	PCErr with code "Delegation not negotiated" (see <xref
-	target="PCEP-Error-Object"/>) will be generated. Note that even if the
+	target="PCEP-Error-Object"/>) SHOULD be generated. Note that even if the
 	update capability has not been negotiated, a PCE can still receive LSP
 	Status Reports from a PCC and build and maintain an up to date view of
 	the state of the PCC's LSPs.</t>
@@ -861,7 +891,7 @@
 	state transfer, it MUST send a PCErr message to the PCE and terminate
 	the session using the PCEP session termination procedure.</t>
 	
-	<t> In the event of a PCC resetting the session during resynchronization, 
+	<t> In the event of a PCC resetting the session during synchronization, 
 	the PCE MUST clean up state it received from this PCC. Session reestablishment
 	MUST be re-attempted per the procedures defined in <xref target="RFC5440"/>. </t>
 
@@ -1004,8 +1034,8 @@
 	  close the PCEP session.</t>
 	  
 	  <t> 
-	  If state synchronization is required, then after the Initialization 
-	  phase has completed, the PCE MUST mark any LSPs in the LSP database 
+	  If state synchronization is required, then prior to completing the Initialization 
+	  phase, the PCE MUST mark any LSPs in the LSP database 
 	  that were previously reported by the PCC as stale. 
 	  When the PCC reports an LSP during state synchronization, 
 	  if the LSP already exists in the LSP database, the PCE MUST update 
@@ -1125,6 +1155,24 @@
 	</figure>
 
 	</section>
+	
+	<section anchor="triggered-synchro" title="PCE-triggered State Synchronization">
+		
+		<t> Because the accuracy of the computations performed by the PCE is tied to the accuracy of the
+		view the PCE has on the state of the LSPs, it can be beneficial to be able to resynchronize this
+		state even after the session has established. The PCE may use this approach to continuously 
+		sanity check its state against the network, or to recover from error 
+		conditions without having to tear down sessions. </t> 
+		
+		<t> To trigger a resynchronization with a PCC, the PCE MUST first mark any LSPs in the
+		LSP database that were previously reported by the PCC as stale and then send a PCUpd for an 
+		LSP object containing a PLSP-ID of 0 and with the SYNC 
+		flag set to 1. This PCUpd message is the trigger for the PCC to enter the synchronization 
+		phase as described in <xref target="optimized-synchro"/> and start sending
+		PCRpt messages. After the receipt of the end-of-synchronization marker, the PCE will purge LSPs 
+		which were not refreshed. </t> 
+	</section>
+	
       </section>
 
       <section anchor="Delegation" title="LSP Delegation">
@@ -1156,14 +1204,13 @@
 
 	<section anchor="LSP-DELEGATION" title="Delegating an LSP">
 	  <t>A PCC delegates an LSP to a PCE by setting the Delegate flag in LSP
-	  State Report to 1. A PCE confirms the delegation when it sends the
-	  first LSP Update Request for the delegated LSP to the PCC by setting
-	  the Delegate flag to 1. Note that a PCE does not immediately confirm
-	  to the PCC the acceptance of LSP Delegation; Delegation acceptance is
-	  confirmed when the PCE wishes to update the LSP via the LSP Update
-	  Request. If a PCE does not accept the LSP Delegation, it MUST
+	  State Report to 1. 
+	  If the PCE does not accept the LSP Delegation, it MUST
 	  immediately respond with an empty LSP Update Request which has the
-	  Delegate flag set to 0.</t>
+	  Delegate flag set to 0. 
+	  If the PCE accepts the LSP Delegation,  it confirms this when it sends the
+	  first LSP Update Request for the delegated LSP to the PCC by setting
+	  the Delegate flag to 1 (note that this may occur at a later time).</t>
 
 	  <t>The delegation sequence is shown in <xref
 	  target="lsp-delegate"/>.</t>
@@ -1195,10 +1242,16 @@
 	  <t>When a PCC decides that a PCE is no longer permitted to modify an
 	  LSP, it revokes that LSP's delegation to the PCE.  A PCC may revoke an
 	  LSP delegation at any time during the LSP's life time.  A PCC revoking
-	  an LSP delegation MAY immediately clear the LSP state provided by the PCE.
+	  an LSP delegation MAY immediately clear the LSP state provided by the PCE, 
+	  but to avoid traffic loss, it SHOULD do so in a make-before-break fashion. 
 	  If the PCC has received but not yet acted on PCUpd messages from the PCE for
 	  the LSP whose delegation is being revoked, then it SHOULD ignore these PCUpd 
-	  messages when processing the message queue. Any further PCUpd messages are
+	  messages when processing the message queue. All effects of all messages 
+	  for which processing started before the revocation took place MUST be 
+	  allowed to complete and the result MUST be given the same treatment as any LSP that
+	  had been previously delegated to the PCE (e.g. the state MAY be immediately
+	  cleared).
+	  Any further PCUpd messages from the PCE are
 	  handled according to the PCUpd procedures described in this document.</t>
 
 	  <t>If a PCEP session with the PCE to which the LSP is delegated exists
@@ -1233,21 +1286,26 @@
 	  the time interval specified in Redelegation Timeout Interval before before
 	  revoking LSP delegations to that PCE and attempting to redelegate LSPs to an 
 	  alternate PCE.   If a  PCEP session with the original PCE can be reestablished 
-	  before the Redelegation Timeout Interval timer expires, LSP delegations to the PCE remain 
-	  intact.
+	  before the Redelegation Timeout Interval timer expires, LSP delegations 
+	  to the PCE remain intact.
 	  </t>
 	  
 	  
 	  <t>Likewise, when a PCC's PCEP session with a PCE 
 	  terminates unexpectedly, the PCC MUST wait for the State Timeout Interval before 
-	  flushing any LSP state associated with that PCE.  
-	  If the State Timeout Interval timer expires before a PCC has redelegated an LSP to another
-	  PCE (for example, if a PCC is not connected to any active stateful PCE
-	  or if no connected active stateful PCE accepts the delegation), the
-	  PCC SHALL flush any LSP state set by the PCE.
+	  flushing any LSP state associated with that PCE. 
+	  Note that the State Timeout Interval timer may expire before the PCC has 
+	  redelegated the LSPs to another
+	  PCE, for example if a PCC is not connected to any active stateful PCE
+	  or if no connected active stateful PCE accepts the delegation. In this case, the
+	  PCC SHALL flush any LSP state set by the PCE upon expiration of the State Timeout 
+	  Interval and revert to operator-defined default parameters. This operation SHOULD be done in 
+	  a make-before-break fashion. 
 	  </t>
 	  
-	  <t>The State Timeout Interval SHOULD be greater than or equal to the Redelegation Timeout Interval.
+	  <t>The State Timeout Interval SHOULD be greater than or equal to the Redelegation 
+	  Timeout Interval and MAY be set to infinity (meaning that until the PCC specifically takes
+	  action to change the parameters set by the PCE, they will remain intact). 
 	  </t>
 	  
 	  <t>If State Synchronization Avoidance is enabled, a PCC MUST increment
@@ -1283,8 +1341,9 @@
 	  <t>If a PCC cannot delegate an LSP to a PCE (for example, if a PCC is
 	  not connected to any active stateful PCE or if no connected active
 	  stateful PCE accepts the delegation), the LSP delegation on the PCC
-	  will time out within a configurable Delegation Timeout Interval and
-	  the PCC MUST flush any LSP state set by a PCE.</t>
+	  will time out within a configurable Redelegation Timeout Interval and
+	  the PCC MUST flush any LSP state set by a PCE at the expiration of the 
+	  State Timeout Interval.</t>
 	</section>
 
 	<section anchor="Redundant-PCEs" title="Redundant Stateful PCEs">
@@ -1293,12 +1352,47 @@
 	  may have only a subset of LSPs delegated to it.  The backup PCE does 
 	  not update any LSPs that are not delegated to it, but receives all 
 	  LSP State Reports from a PCC.  When the primary PCE for a given LSP 
-	  set fails, after expiry of the redelegation timeout, the PCC SHOULD
+	  set fails, after expiry of the Redelegation Timeout Interval, the PCC SHOULD
 	  delegate to the redundant PCE all LSPs that had been previously delegated 
-	  to the failed PCE.
+	  to the failed PCE. Assuming that the State Timeout Interval had been configured
+	  to be larger than the Redelegation Timeout Interval (as recommended), this 
+	  delegation change will not cause any changes to the LSP parameters. 
+	  </t>
+	</section>
+	  
+	  <section anchor="PCE-failure" title="Redelegation on PCE failure">
+	  
+	  <t>
+	  On failure, the goal is to: 1) avoid any traffic loss on the LSPs 
+	  that were updated by the PCE that crashed 2) minimize the churn in the 
+	  network in terms of ownership of the LSPs, 3) not leave any "orphan" 
+	  (undelegated) LSPs  and 4) be able to control when the state that was 
+	  set by the PCE can be changed or purged. The values chosen for the
+	  Redelegation Timeout and State Timeout values affect the ability to accomplish these goals.
 	  </t>
 	  
+	  <t> This section summarizes the behaviour with regards to LSP delegation
+	  and LSP state on a PCE failure. </t> 
+	  
+	  <t>If the PCE crashses but recovers within the 
+	  Redelegation Timeout, both the delegation state and the LSP state are kept intact.</t>
+		
+	  <t>If the PCE crashes but does not recover within the Redelegation 
+	  Timeout, the delegation state is returned to the PCC. If the PCC can redelegate the LSPs 
+	  to another PCE, and that PCE accepts the delegations, there will be no change in LSP state.
+	  If the PCC cannot redelegate 
+	  the LSPs to another PCE, then upon expiration of the State Timeout Interval, 
+	  the state set by the PCE is flushed, which may cause change in the LSP state. 
+	  Note that an operator may choose to use an infinite State Timeout
+	  Interval if he wishes to maintain the PCE state indefinetely. Note also that flushing the state 
+	  should be implemented using make-before-break to avoid traffic loss.</t>
+	
+	  <t> If there is a hot-standby PCE, the Redelegation Timeout may be set to 0 through policy on the PCC, causing
+	  the LSPs to be redelegated immediately to the PCC, which can delegate them immediately to the hot-standby
+	  PCE. Assuming the State Timeout Interval is larger than the Redelegation Timeout,  
+	  the LSP state will be kept intact. </t> 
 	</section>
+	
 
       </section>
 
@@ -1432,7 +1526,7 @@
 	  MUST report this error by including the 
 	  LSP-ERROR-CODE TLV (<xref target="LSP-err-code-tlv"/>) with LSP error 
 	  value="Unacceptable PCUpd parameters" in the LSP object in the PCRpt message to the 
-	  PCE. It MAY react further to this error by revoking the delegation. 
+	  PCE. Based on local policy, it MAY react further to this error by revoking the delegation.
 	  </t>
 
 	  <t>Once an LSP is up, the PCC sends an LSP State Report (PCRpt
@@ -1505,14 +1599,10 @@ Where:
 
    <state-report> ::= <SRP> 
 					  <LSP>
-                      [<path-list>]
-
-Where:
-
-   <path-list>::=<path>[<path-list>]
+                      <path>
  
 Where:
-     <path-list> is defined in [RFC5440] and extended by PCEP extensions.
+     <path> is defined in [RFC5440] and extended by PCEP extensions.
 	  ]]></artwork>
 	</figure>
 	
@@ -1526,7 +1616,9 @@ Where:
 	then it should use the SRP-ID-number of that request. 
 	If the SRP object is missing, the receiving PCE MUST send a PCErr
 	message with Error-type=6 (Mandatory Object missing) and
-	Error-value=[TBD] (SRP object missing).</t>
+	Error-value=[TBD] (SRP object missing). No state compression is allowed for 
+	state reporting. The PCC MUST explicitly report state changes (including removal) for 
+	paths it manages. </t>
 	
 	<t>The LSP object (see <xref target="LSP-Object-Format"/>) is mandatory,
 	and it MUST be included in each LSP State Report on the PCRpt message.
@@ -1537,9 +1629,7 @@ Where:
 	<t> If the LSP transitioned to non-operational state, the PCC SHOULD include 
 	the LSP-ERROR-TLV (<xref target="LSP-err-code-tlv"/>) with the relevant 
 	LSP Error Code to report the error to the PCE. </t> 
-	
-	<t> The path descriptor is described in separate technology-specific
-	documents according to the LSP type. </t>
+
 	
     </section>
 
@@ -1561,24 +1651,26 @@ Where:
 
    <update-request> ::= <SRP>
                         <LSP>
-                        [<path-list>]
-
+                        <path>
 Where:
+   <path>::= <ERO><attribute-list>
 
-   <path-list>::=<path>[<path-list>]
   Where:
-   <path> is defined in technology-specific documents per LSP type
+   <attribute-list> is defined in [RFC5440] and extended by PCEP extensions.
 	  ]]></artwork>
 	</figure>
   
-	<t>There are two mandatory objects that MUST be included within each LSP
+	<t>There are three mandatory objects that MUST be included within each LSP
 	Update Request in the PCUpd message: the SRP Object (see 
-	<xref target="SRP-Object-Format"/>) and the LSP object (see <xref
-	target="LSP-Object-Format"/>). If the SRP object is missing, the
-	receiving PCE MUST send a PCErr message with Error-type=6 (Mandatory
+	<xref target="SRP-Object-Format"/>), the LSP object (see <xref
+	target="LSP-Object-Format"/>) and the ERO object (as defined in 
+	<xref target="RFC5440"/>. If the SRP object is missing, the
+	receiving PCC MUST send a PCErr message with Error-type=6 (Mandatory
 	Object missing) and Error-value=[TBD] (SRP object missing). If the LSP object is missing, the
-	receiving PCE MUST send a PCErr message with Error-type=6 (Mandatory
-	Object missing) and Error-value=[TBD] (LSP object missing)
+	receiving PCV MUST send a PCErr message with Error-type=6 (Mandatory
+	Object missing) and Error-value=[TBD] (LSP object missing). If the ERO object
+	is missing, the receiving PCV MUST send a PCErr message with Error-type=6 (Mandatory
+	Object missing) and Error-value=[TBD] (ERO object missing).
 	</t>
 
 	<t>A PCC only acts on an LSP Update Request if permitted by the local 
@@ -1590,15 +1682,16 @@ Where:
 	up, it will be re-signaled. </t>
 	
 	<t> The PCC SHOULD use the make-before-break procedures described in 
-	<xref target="RFC3209"/> in the re-signaling operation. When traffic 
-	switchover to the updated path and teardown of the old path are under 
-	the control of PCC, no extensions are necessary. The PCC MUST send a 
-	PCRpt message with the new path attributes to the PCE only after traffic 
-	has been switched over. In some situations, it may be desirable for 
-	the PCE to control the timing of traffic switchover. This mode of 
-	operation and the extensions necessary to support it are left 
-	for further study. In either case, resignaling of the path, label allocation, 
-	and RSVP id allocations are under the control of the PCC. </t>
+	<xref target="RFC3209"/> in the re-signaling operation. 
+	During this process, two paths will briefly co-exist. The PCC MUST send
+	separate PCRpt messages for each, identified by the
+	LSP-IDENTIFIERS TLV. When the old path is torn down after the head end switches 
+	over the traffic, this event MUST be reported by sending a PCRpt message with the
+	LSP-IDENTIFIERS-TLV or the old path, and the R bit set. Thus, a make-before-break
+	operation will typically result in at least two PCRpt messages, one for the new path 
+	and one for the removal of the old path (more messages may be possible if intermediate states 
+	are reported). 
+	</t>
 	
 	<t>A PCC MUST respond with an LSP State Report to each LSP Update
 	Request it processed to indicate the resulting state of the LSP in the network 
@@ -1644,20 +1737,68 @@ Where:
 	
     <section anchor="PCReq" title="The PCReq Message">
 	<t>A PCC MAY include the LSP object in the PCReq message (see <xref
-	target="LSP-Object-Format"/>) if stateful PCE capability has been
-	negotiated on a PCEP session between the PCC and a PCE. The extensions to 
-	the PCReq message are described in technology-specific documents for MPLS and 
-	GMPLS.</t>
+	target="LSP-Object-Format"/>) if the stateful PCE capability has been
+	negotiated on a PCEP session between the PCC and a PCE.
+	</t>
+	<t>
+	The definition of the PCReq message from <xref target="RFC5440"/> and 
+	<xref target='I-D.ietf-pce-gmpls-pcep-extensions'></xref>  is extended to optionally include 
+	the LSP object after the END-POINTS object. For illustration purposes, the
+	encoding from <xref target="RFC5440"/> will become:</t>
+	<figure>
+	  <artwork><![CDATA[
+   <PCReq Message>::= <Common Header>
+                      [<svec-list>]
+                      <request-list>
+
+Where:
+
+      <svec-list>::=<SVEC>[<svec-list>]
+      <request-list>::=<request>[<request-list>]
+
+      <request>::= <RP>
+                   <END-POINTS>
+                   [<LSP>]              <--- New Object
+                   [<LSPA>]
+                   [<BANDWIDTH>]
+                   [<metric-list>]
+                   [<RRO>[<BANDWIDTH>]]
+                   [<IRO>]
+                   [<LOAD-BALANCING>]
+	  ]]></artwork>
+ 	</figure>
 	</section>
 	
     <section anchor="PCRep" title="The PCRep Message">
 	<t>A PCE MAY include the LSP object in the PCRep message (see (<xref
-	target="LSP-Object-Format"/>) if stateful PCE capability has been
+	target="LSP-Object-Format"/>) if the stateful PCE capability has been
 	negotiated on a PCEP session between the PCC and the PCE and the LSP
-	object was included in the corresponding PCReq message from the PCC.
-	The extensions to 
-	the PCRep message are described in technology-specific documents for MPLS and 
-	GMPLS.</t>
+	object was included in the corresponding PCReq message from the PCC.</t>
+
+	<t>
+	The definition of the PCRep message from <xref target="RFC5440"/> and 
+	<xref target='I-D.ietf-pce-gmpls-pcep-extensions'></xref> 
+	is extended to optionally include 
+	the LSP object after the RP object.  For illustration purposes, the
+	encoding from <xref target="RFC5440"/> will become:</t>
+
+	<figure>
+	  <artwork><![CDATA[
+   <PCRep Message> ::= <Common Header>
+                       <response-list>
+
+Where:
+
+      <response-list>::=<response>[<response-list>]
+
+      <response>::=<RP>
+                  [<LSP>]               <--- New Object
+                  [<NO-PATH>]
+                  [<attribute-list>]
+                  [<path-list>]
+
+	  ]]></artwork>
+ 	</figure>
 	</section>
 	
    </section> 
@@ -1864,24 +2005,24 @@ Where:
    0                   1                   2                   3
    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-  |                PLSP-ID                |     Flags       |R|S|D|
+  |                PLSP-ID                |     Flags |  O|A|R|S|D|
   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-  |                                                               |
   //                        Optional TLVs                        //
   |                                                               |
   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 	  ]]></artwork>
        </figure>
-
-       <t>The LSP object body has a variable length and may contain additional
-       TLVs.</t>
+	
+      
 
        <t>PLSP-ID (20 bits): An identifier for the LSP. A PCC creates a unique
        PLSP-ID for each LSP that is constant for the life time of a PCEP
        session. The mapping of the Symbolic Path Name to PLSP-ID is communicated
        to the PCE by sending a PCRpt message containing the SYMBOLIC-PATH-NAME 
        TLV. All subsequent PCEP messages then address the LSP by the PLSP-ID. The 
-	   values of 0 and 0xFFFFF are reserved.</t>
+	   values of 0 and 0xFFFFF are reserved. Note that the PLSP-ID is a value that is
+	   constant for the life time of the PCEP session, during which time there might 
+	   be a different RSVP identifiers (LSP-id, tunnel-id) allocated to this LSP. </t>
 
        <t>Flags (12 bits):
        <list style="hanging">
@@ -1902,23 +2043,61 @@ Where:
 	 <t hangText="R (Remove - 1 bit):"> On PCRpt messages the R Flag
 	 indicates that the LSP has been removed from the PCC. Upon receiving an
 	 LSP State Report with the R Flag set to 1, the PCE SHOULD remove all
-	 state related to the LSP from its database.</t>
+	 state for the path identified by the LSP Identifiers TLV from its database.
+	 When the all-zeros LSP-IDENTIFIERS-TLV is used, the PCE SHOULD remove all
+	 state for the PLSP-ID from its database.</t>
+	 
+	 <t hangText="A(Administrative - 1 bit):"> On PCRpt messages, the A Flag 
+	 indicates the PCC's target operational status for this LSP. On PCUpd 
+	 messages, the A Flag indicates the LSP status that the PCE desires for 
+	 this LSP. In both cases, a value of '1' means that the desired operational 
+	 state is active, and a value of '0' means that the desired operational 
+	 state is inactive. A PCC ignores the A flag on a PCUpd message unless 
+	 the operator's policy allows the PCE to control the corresponding LSP's 
+	 administrative state. </t>
+	 
+	 <t hangText="O(Operational - 3 bits):"> On PCRpt messages, the O Field represents 
+	 the operational status of the LSP. </t>
+	 
+	 <t> The following values are defined:
+	 
+	  <list style="hanging">
+		<t hangText="0 - DOWN:"> not active.</t> 
+		<t hangText="1 - UP:"> signalled.</t> 
+		<t hangText="2 - ACTIVE:"> up and carrying traffic. </t>  
+		<t hangText="3 - GOING-DOWN:"> LSP is being torn down, resources are being released.</t> 
+		<t hangText="4 - GOING-UP:"> LSP is being signalled.</t> 
+	    <t hangText="5-7 - Reserved:"> these values MUST be set to 0 on transmission
+		and MUST be ignored on receipt.</t> 
        </list>
-
+	   </t>
+	</list>
        Unassigned bits are considered reserved. They MUST be set to 0 on
        transmission and MUST be ignored on receipt.
        </t>
 
-       <t> TLVs that may be included in the LSP Object are described in
-       the following sections and in separate technology-specific documents. </t>
+       <t> Optional TLVs that may be included in the 
+	   LSP Object are described in the following sections. </t>
 
 <section anchor="LSP-Identifiers-TLVs" title="LSP Identifiers TLVs">
 
-	 <t>Whenever the value of an LSP identifier changes, a PCC MUST send out
-	 an LSP State Report, where the LSP Object carries the LSP Identifiers
-	 TLV that contains the new value. The LSP Identifiers TLV MUST also be
-	 included in the LSP object during state synchronization. There are two
+	 <t> The LSP Identifiers TLV MUST be
+	 included in the LSP object in PCRpt messages. 
+	 If the TLV is missing, the PCE will generate an error with
+	 error-type 6 (mandatory object missing) and Error Value 11
+	 (LSP-IDENTIFIERS TLV missing) and close the session. 
+	 The LSP Identifiers TLV MAY be included in the LSP object in PCUpd
+	 messages. 
+	 The special value of all zeros for this TLV is used to refer to 
+	 all paths pertaining to a particular PLSP-ID. 
+	 There are two
 	 LSP Identifiers TLVs, one for IPv4 and one for IPv6.</t>
+	 
+	 <t> It is the responsibility of the PCC to send to the PCE the identifiers for
+	 each RSVP incarnation of the tunnel. For exmple, in a make-before-break
+	 scenario, the PCC MUST send a separate PCRpt for the old and for the 
+	 reoptimized paths, and explicitly report removal of any of these paths using the R bit
+	 in the LSP object.</t> 
 
 	 <t>The format of the IPV4-LSP-IDENTIFIERS TLV is shown in the following
 	 figure:</t>
@@ -1955,11 +2134,7 @@ Where:
 	   <t hangText="Tunnel ID:"> contains the 16-bit 'Tunnel ID' identifier
 	   defined in <xref target="RFC3209"/>, Section 4.6.1.1 for the
 	   LSP_TUNNEL_IPv4 Session Object. Tunnel ID remains constant over the
-	   life time of a tunnel. However, when Global Path Protection or Global
-	   Default Restoration is used, both the primary and secondary LSPs have
-	   their own Tunnel IDs. A PCC will report a change in Tunnel ID when
-	   traffic switches over from primary LSP to secondary LSP (or vice
-	   versa).</t>
+	   life time of a tunnel. </t>
 
 	   <t hangText="Extended Tunnel ID:"> contains the 32-bit 'Extended
 	   Tunnel ID' identifier defined in <xref target="RFC3209"/>, Section
@@ -2300,8 +2475,10 @@ Where:
 	 <t hangText="    6">Mandatory Object missing
 	 <list style="hanging" hangIndent="17">
 	   <t hangText=" Error-value=8:">LSP Object missing</t>
+	   <t hangText=" Error-value=9:">ERO Object missing</t>
+	   <t hangText=" Error-value=10:">SRP Object missing</t> 
+	   <t hangText=" Error-value=11:">LSP-IDENTIFIERS TLV missing</t> 
 	   <t hangText=" Error-value=12:">LSP-DB-VERSION TLV missing</t>
-	   <t hangText=" Error-value=13:">SRP Object missing</t> 
 
 	 </list>
 	 </t>
@@ -2433,19 +2610,21 @@ Where:
        at the PCC).</t>
 
        <t>A PCC implementation SHOULD allow the operator to specify both the
-       Redelegation Timeout Interval and the State Flush Interval. The default value of the Redelegation Timeout
+       Redelegation Timeout Interval and the State Timeout Interval. The default value of 
+	   the Redelegation Timeout
        Interval SHOULD be set to 30 seconds. An operator MAY also configure a policy
-	that will dynamically adjust the Redelegation Timeout, for example setting it 
+	that will dynamically adjust the Redelegation Timeout Interval, for example setting it 
 	to zero when the PCC has an established session to a backup PCE.  The default
 	value for the State Timeout Interval SHOULD be set to 60 seconds. 
 	</t>
 
-       <t>When an LSP can no longer be delegated to a PCE, after the expiration
-       of the Delegation Timeout Interval, the LSP MAY either: 1) retain its
-       current parameters or 2) revert to operator-defined default LSP
-       parameters. This behavior SHOULD be configurable and in the case when (2)
-       is supported, a PCC implementation MUST allow the operator to specify the
-       default LSP parameters.</t>
+       <t>After the expiration
+       of the State Timeout Interval, the LSP reverts to operator-defined default
+       parameters. A PCC implementation MUST allow the operator to specify the
+       default LSP parameters. To achieve a behavior where the LSP retains the parameters 
+	   set by the PCE until such time that the PCC makes a change to them, a State Timeout Interval of 
+	   infinity SHOULD be used. Any changes to LSP parameters SHOULD be done in make-before-break 
+	   fashion. </t>
 
         <t>A PCC implementation SHOULD allow the operator to specify delegation
         priority for PCEs. This effectively defines the primary PCE and one or
@@ -2623,6 +2802,7 @@ Where:
       <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5226.xml"?>
 	  <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5284.xml"?>
       <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5511.xml"?>
+	  <?rfc include="reference.I-D.ietf-pce-gmpls-pcep-extensions"?>
 
    </references>
 
@@ -2636,8 +2816,8 @@ Where:
      <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5305.xml"?>
      <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5394.xml"?>
      <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5557.xml"?>
-	 <?rfc include="reference.I-D.ietf-pce-gmpls-pcep-extensions"?>
 	 <?rfc include="reference.I-D.sivabalan-pce-disco-stateful"?>
+	 <?rfc include="reference.I-D.zhang-pce-stateful-pce-app"?>
 
       <reference anchor="MXMN-TE" target=""> 
        <front>
