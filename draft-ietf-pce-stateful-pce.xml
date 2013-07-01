@@ -837,9 +837,11 @@
 	<t> The end of synchronization  marker is a PCRpt message with the 
 	SYNC Flag set to 0 for an LSP Object with PLSP-ID equal to the 
 	reserved value 0. The
-	LSP Object does not include the SYMBOLIC-PATH-NAME TLV in this case.  
-	<!-- FIXME: Robert: does it include LSP-DB-VERSION TLV ? -->
-	</t> 
+	LSP Object does not include the SYMBOLIC-PATH-NAME TLV in this case. 
+	If both PCEP speakers had set the INCLUDE-DB-VERSION Flag in the OPEN
+	object's STATEFUL-PCE-CAPABILITY TLV, then the LSP-DB-VERSION TLV 
+	MUST be included and contain the PCC's latest LSP State Database version.</t>
+	
 	
 	<t>A PCE SHOULD NOT send PCUpd messages to a PCC before State
 	Synchronization is complete. A PCC SHOULD NOT send PCReq messages to a
@@ -1272,8 +1274,7 @@
 	  may have only a subset of LSPs delegated to it.  The backup PCE does 
 	  not update any LSPs that are not delegated to it, but receives all 
 	  LSP State Reports from a PCC.  When the primary PCE for a given LSP 
-	  set fails, after expiry of the delegation timeout, that PCC will
-	  <!-- FIXME: Robert: use "PCC SHOULD" instead of "PCC will"? -->
+	  set fails, after expiry of the delegation timeout, the PCC SHOULD
 	  delegate to the redundant PCE all LSPs that had been previously delegated 
 	  to the failed PCE.
 	  </t>
@@ -1451,9 +1452,6 @@
 	PCC. In the case of session failure, session reestablishment
 	MUST be re-attempted per the procedures defined in <xref target="RFC5440"/>. </t>
 
-    <!-- FIXME: Robert: this paragraph looks out-dated -->
-	<t>State cleanup after session termination, as well as session setup
-	failures will be described in a later version of this document.</t>
 
       </section>
     </section>
@@ -1756,11 +1754,7 @@ Where:
 	  ]]></artwork>
 	 </figure>
 
-     <!-- FIXME: Robert: we already define two different ways on how to
-                         arrive at an identifier. It is useful for relating
-                         objects between TED and LSP-DB, so giving it some
-                         sort of structure would be super useful for deployment
-                         flexibility. Can we make it a URN? -->
+     
 	 <t>The type of the TLV is [TBD] and it has a a variable length, which
 	 MUST be greater than 0.  The value contains a node identifier that MUST
 	 be unique in the network. The node identifier MAY be configured by an
@@ -2162,7 +2156,6 @@ Where:
        </section>
 
        <section anchor="Delegation-Parameters" title="Delegation Parameters TLVs">
-	 <!-- FIXME: Robert: can we punt this section to another document? -->
 	 <t>Multiple delegation parameters, such as sub-delegation permissions,
 	 authentication parameters, etc. need to be communicated from a PCC to a
 	 PCE during the delegation operation. Delegation parameters will be
@@ -2268,8 +2261,7 @@ Where:
 	 <ttcol align="left" width='30%'>Description </ttcol>
 	 <ttcol align="left" width='55%'>Reference </ttcol>
  	 <c></c><c>&nbsp;</c><c></c>
-	 <c>28</c><c>Remove</c><c>This document</c>
- 	 <c>29</c><c>Operational</c><c>This document</c>
+	 <c>29</c><c>Remove</c><c>This document</c>
  	 <c>30</c><c>SYNC</c><c>This document</c>
  	 <c>31</c><c>Delegate</c><c>This document</c>
        </texttable>
