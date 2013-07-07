@@ -13,8 +13,8 @@
 <?rfc subcompact="no"?>
 <rfc category="std" docName="draft-varga-netconf-exi-capability-00" ipr="trust200902">
 	<front>
-		<title abbrev="EXI">
-			NETCONF Extensions for Efficient XML Interchange
+		<title abbrev="EXI Capability">
+			Efficient XML Interchange Capability for NETCONF
 		</title>
 
 		<author fullname="Robert Varga" initials="R." surname="Varga">
@@ -36,27 +36,15 @@
 
 		<abstract>
 			<t>
-				The Network Configuration Protocol (NETCONF) provides mechanisms to
-				install, manipulate, and delete the configuration of network devices
-				via exchange of XML messages. These messages are encoded as XML text
-				documents, which makes the exchange easily understandable by human
-				operators by simply observing them on the wire. Unfortunately, this
-				also makes the protocol slightly less efficient, both from CPU and
-				bandwidth usage point of view. This is a well-known weakness of XML
-				documents, usually addressed by using external compression, such as
-				deflate or gzip.
-			</t>
-			<t>
-				<xref target="W3C.REC-exi-20110310">Efficient XML Interchange</xref>
-				is a W3C Recommendation which defines a more efficient way of encoding
-				XML Information Set than the usual text representation. This is
-				achieved by a combination of reduced verbosity, binary encoding and,
-				optionally, pruning of non-essential information like comments.
-			</t>
-			<t>
-				This document defines a capability-based extension to the NETCONF
-				protocol that allows peers to agree to exchange protocol messages
-				using EXI encoding.
+				The Network Configuration Protocol (NETCONF) provides mechanisms
+				to install, manipulate, and delete the configuration of network
+				devices via exchange of XML messages in textual representation.
+				Efficient XML Interchange (EXI) is a W3C-recommended binary
+				representation of XML Information Set, which is more efficient
+				from both CPU and bandwidth utilization perspective. This
+				document defines a capability-based extension to the NETCONF
+				protocol that allows peers to agree to exchange protocol
+				messages using EXI encoding.
 			</t>
 		</abstract>
 
@@ -72,69 +60,43 @@
 	<middle>
 		<section title="Introduction">
 			<t>
-				<xref target="RFC5440"/> describes the Path Computation Element
-				Protocol PCEP.  PCEP defines the communication between a Path Computation
-				Client (PCC) and a Path Computation Element (PCE), or between PCE and PCE,
-				enabling computation of Multiprotocol Label Switching (MPLS) Traffic
-				Engineered Label Switched Paths (TE LSPs).
+				The NETCONF protocol <xref target="RFC6241"/> is defined in
+				terms of two peers, client and server, exchanging XML messages
+				in an RPC pattern. These messages are encoded as XML text
+				documents, which makes the exchange easily understandable by
+				human operators by simply observing them on the wire.
+				Unfortunately, this feature takes its toll on both computation
+				and network resources, as the representation contains redundant
+				information and verbose names.
 			</t>
 
 			<t>
-				<xref target='I-D.ietf-pce-gmpls-pcep-extensions'/> specifies a set of
-				extensions to PCEP to enable its use in GMPLS networks. Among GMPLS-specific
-				objects, it also defines GENERALIZED-BANDWIDTH and GENERALIZED-LOAD-BALANCE,
-				as replacements for BANDWIDTH and LOAD-BALANCE objects defined in
-				<xref target="RFC5440"/>. The definition is needed because <xref target="RFC5440"/>,
-				does not provide any way of extending BANDWIDTH and LOAD-BALANCE objects,
-				eventhough it provides extension points in all other objects it defines.
+				<xref target="W3C.REC-exi-20110310">Efficient XML Interchange</xref>
+				is a W3C Recommendation which defines a more efficient way of
+				encoding XML Information Set than the usual text representation.
+				This is achieved by a combination of reduced verbosity, binary
+				encoding and, optionally, pruning of non-essential information
+				like comments.
 			</t>
 
 			<t>
-				<xref target='I-D.ietf-pce-gmpls-pcep-extensions'/> then defines a new
-				definition of PCEP message format, which rolls into it all previously
-				published PCEP extensions (like <xref target="RFC5521"/> and <xref target="RFC5541"/>).
-				This places a requirement for any strictly-GMPLS compliant implementation to
-				also understand all those extensions.
-			</t>
-
-			<t>
-				This document describes an alternative approach, which works by allowing
-				peers to negotiate the use of an updated definition of the BANDWIDTH and
-				LOAD-BALANCE objects and their on-wire format, which meets the requirements
-				set out in <xref target="I-D.ietf-pce-gmpls-aps-req"/>, while also providing
-				extension points on-par with other objects defined in <xref target="RFC5440"/>.
-			</t>
-
-			<t>
-				The motivation for this proposal is to take out the base protocol fixes
-				from <xref target='I-D.ietf-pce-gmpls-pcep-extensions'/> and present them
-				for use by other protocol extensions, without them needing to pull in all
-				the other parts of GMPLS extensions. This will hopefully greatly simplify
-				<xref target='I-D.ietf-pce-gmpls-pcep-extensions'/> and ease the job of
-				implementing it within existing PCEP stacks.
+				It seem advantageous to allow clients and servers participating
+				on a NETCONF session to sacrifice human readability to increase
+				processing efficiency, especially in environments with high
+				transactional activity and/or limited computing resources.
 			</t>
 		</section>
 
 		<section title="Terminology">
 			<t>
-				This document uses the following terms defined in <xref target="RFC5440"/>:
-				PCC, PCE, PCEP Peer.
-			</t>
-			<t>
-				This document uses the following terms defined in <xref target="RFC2210"/>:
-				SENDER_TSPEC.
-			</t>
-
-			<t>
-				The following terms are defined in this document:
-				<list style="hanging">
-					<t hangText="Traffic Specification:">
-						A subobject which encapsulates an
-						<xref target="RFC2210">RFC2210 SENDER_TSPEC object</xref>.
-						Note that "object" here does not refer to a PCEP object,
-						and to prevent confusion this text refers to that entity
-						just as "SENDER_TSPEC".
-					</t>
+				This document uses the following terms defined in <xref target="RFC6241"/>:
+				<list style="symbols">
+					<t>capability</t>
+					<t>client</t>
+					<t>message</t>
+					<t>protocol operation</t>
+					<t>remote procedure call</t>
+					<t>server</t>
 				</list>
 			</t>
 		</section>
@@ -171,13 +133,13 @@
 				<t>
 					The identifier MAY have a the following parameters:
 					<list style="hanging">
-						<t hangText="compression">
+						<t hangText="compression:">
 							This indicates that the sender is willing to
 							perform EXI compression. The parameter MUST contain
 							a positive integral value, which indicates maximum
 							compression block size which the peer can request.
 						</t>
-						<t hangText="schemas">
+						<t hangText="schemas:">
 							This indicates that the sender can use
 							schema-informed grammars for EXI encoding. The
 							parameter MUST contain a value, which has to be
@@ -209,21 +171,140 @@
 					</list>
 				</t>
 			</section>
+
+			<section anchor="Operations" title="New Operations">
+				<section anchor="start-exi" title="&lt;start-exi>">
+					<t>
+						<list style="hanging">
+							<t hangText="Description:">
+								The &lt;start-exi> operation requests that the
+								receiving party switches message encoding to EXI. The
+								request is evaluated and if deemed correct, the
+								receiving party sends an acknowledgement response and
+								uses the parameters specified for encoding subsequent
+								NETCONF messages sent to the peer which has requested
+								it.
+							</t>
+							<t hangText="Parameters:">
+								<list style="hanging">
+									<t hangText="alignment:">
+										Requested EXI alignment. If this parameter is
+										not present, bit-packed is assumed. The
+										following values are valid:
+										<list style="hanging:">
+											<t hangText="bit-packed:">
+												Set EXI alignment to bit-packed.
+											</t>
+											<t hangText="byte-aligned:">
+												Set EXI alignment to byte-aligned.
+											</t>
+											<t hangText="pre-compression:">
+												Set EXI alignment to pre-compression.
+											</t>
+											<t hangText="compressed:">
+												Do not specify EXI alignment, but
+												perform EXI compression instead.
+											</t>
+										</list>
+									</t>
+									<t hangText="fidelity:">
+										Requested EXI fidelity options. If this
+										parameter is not present or empty, all
+										fidelity options are disabled. The receiving
+										party MUST use all specified fidelity options
+										when encoding messages. The following items
+										may be specified:
+										<list style="hanging">
+											<t hangText="&lt;comments/>:">
+												EXI Preserve.comments
+											</t>
+											<t hangText="&lt;dtd/>:">
+												EXI Preserve.dtd
+											</t>
+											<t hangText="&lt;lexical-value/>:">
+												EXI Preserve.lexicalValues
+											</t>
+											<t hangText="&lt;pis/>:">
+												EXI Preserve.pis
+											</t>
+											<t hangText="&lt;prefixes/>:">
+												EXI Preserve.prefixes
+											</t>
+										</list>
+									</t>
+								</list>
+							</t>
+							<t hangText="Positive Response:">
+								If the device was able to satisfy the request, an
+								&lt;rpc-reply> is sent that contains an &lt;ok> element.
+							</t>
+							<t hangText="Negative Response:">
+								An &lt;rpc-error> element is included in the
+								&lt;rpc-reply> if the request cannot be completed for
+								any reason.
+							</t>
+						</list>
+					</t>
+				</section>
+
+				<section anchor="stop-exi" title="&lt;stop-exi>">
+					<t>
+						<list style="hanging">
+							<t hangText="Description:">
+								The &lt;stop-exi> operation requests that the
+								receiving party stops encoding messages EXI and
+								switches back to the standard XML encoding. This
+								request is evaluated and if it can be serviced, the
+								receiving party sends a positive acknowledgement in
+								current message encoding. All subsequent NETCONF
+								messages sent by the party MUST be encoded in XML.
+							</t>
+							<t hangText="Positive Response:">
+								If the device was able to satisfy the request, an
+								&lt;rpc-reply> is sent that contains an &lt;ok> element.
+							</t>
+							<t hangText="Negative Response:">
+								An &lt;rpc-error> element is included in the
+								&lt;rpc-reply> if the request cannot be completed for
+								any reason.
+							</t>
+						</list>
+					</t>
+				</section>
+			</section>
+		</section>
+
+		<section anchor="yang" title="YANG module for &lt;start-exit> and &lt;stop-exi> Operations">
+			<t>
+				The following YANG module defines the new operations introduced
+				in this document. The YANG language is defined in <xref target="RFC6020"/>.
+				Every NETCONF speaker that supports the :exi capability MUST
+				implement this YANG module.
+
+			</t>
+
+			<t>
+				<![CDATA[
+				TBD.
+				]]>
+			</t>
 		</section>
 
 		<section anchor="IANA-considerations" title="IANA considerations">
-			<section anchor="PCEP-BANDWIDTH-Object" title="PCEP-BANDWIDTH Object">
-				<t>This document defines a new format and semantics of PCEP-BANDWIDTH
-					Object. These are a strict superset of original semantics.
-				</t>
-			</section>
+			<t>
+				This document registers the following capability identifier URN in
+				the 'Network Configuration Protocol (NETCONF) Capability URNs' registry:
+
+				urn:ietf:params:netconf:capability:exi:1.0
+			</t>
 		</section> 
 
 		<section anchor="Security" title="Security Considerations">
 			<t>
-				The security considerations described in <xref target="RFC5440"></xref> 
-				apply to the extensions described in this document. These extensions do
-				not have any impact on security and threat models defined therein.
+				The compression option present in EXI specification may increase
+				CPU and memory requirements for encoding the response. Devices
+				should ensure this overhead is acceptable before agreeing to
+				using EXI encoding, such that no operational risks are introduced.
 			</t>
 		</section>
 
@@ -232,24 +313,10 @@
 	<back>
 		<references title="Normative References">
 			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.2119.xml"?>
-			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.2205.xml"?>
-			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.2210.xml"?>
+			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.6020.xml"?>
 			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.6241.xml"?>
 			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.6242.xml"?>
-			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.4606.xml"?>
-			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5440.xml"?>
-			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5521.xml"?>
-			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5541.xml"?>
-			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.6003.xml"?>
-			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.6003.xml"?>
 			<?rfc include="http://xml.resource.org/public/rfc/bibxml4/reference.W3C.REC-exi-20110310.xml"?>
-			<?rfc include="reference.I-D.ietf-pce-gmpls-aps-req"?>
-			<?rfc include="reference.I-D.ietf-pce-gmpls-pcep-extensions"?>
-
-		</references>
-
-		<references title="Informative References">
-			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5557.xml"?>
 		</references>
 	</back>
 </rfc>

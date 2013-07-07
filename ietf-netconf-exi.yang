@@ -1,0 +1,57 @@
+module ietf-netconf {
+    namespace "urn:ietf:params:xml:ns:netconf:exi:1.0";
+
+    prefix exi;
+
+    organization
+      "IETF NETCONF (Network Configuration) Working Group";
+
+    contact
+       "Robert Varga <robert.varga@pantheon.sk>";
+
+    description
+      "NETCONF Protocol Operations for Efficient XML Interchange.";
+
+    revision 2013-07-07 {
+      description
+        "Initial revision";
+      reference
+        "I-D.varga-netconf-exi-capability";
+    }
+
+    rpc start-exi {
+    	description
+	    "Start encoding protocol messages in Efficient XML Interchange
+	     format.";
+	
+	reference "I-D.varga-netconf-exi-capability";
+
+	input {
+	    leaf alignment {
+	        type enumeration {
+		    enum bit-packed {
+		        description "Use bit-packed EXI alignment";
+		    }
+		    enum byte-aligned {
+		        description "Use byte-aligned EXI alignment";
+		    }
+		    enum pre-compression {
+		        description "Use pre-compression EXI alignment";
+		    }
+		    enum compressed {
+		        description "Do not set EXI alignment, use EXI compression instead";
+		    }
+		}
+		default "bit-packed";
+		description "EXI alignment to use.";
+	    }
+
+	    leaf fidelity {
+	        type enumeration
+
+
+	    }
+	}
+    }
+}
+
