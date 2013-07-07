@@ -1,16 +1,39 @@
 - Hello capability to advertise EXI-awareness
 
 	urn:ietf:params:netconf:capability:exi:1.0
-	comments={true,false}
-		EXI Preserve.comments
-	dtd={true,false}
-		EXI Preserve.dtd
-	lexicalValues={true,false}
-		EXI Preserve.lexicalValues
-	pis={true,false}
-		EXI Preserve.pis
-	prefixes={true,false}
-		EXI Preserve.prefixes
+
+- Start EXI:
+	<start-exi>
+		<fidelity>
+			<!-- EXI Preserve.comments -->
+			<comments/>
+
+			<!-- EXI Preserve.dtd -->
+			<dtd/>
+
+			<!-- EXI Preserve.lexicalValues -->
+			<lexical-values/>
+
+			<!-- EXI Preserve.pis -->
+			<pis/>
+
+			<!-- EXI Preserve.prefixes -->
+			<prefixes/>
+		</fidelity>
+
+		<!-- Valid values:
+			bit-packed	-> EXI alignment
+			byte-alignment	-> EXI alignment
+			pre-compression	-> EXI alignment
+			compressed	-> compression=true
+		-->
+		<alignment>pre-compression</alignment>
+	</start-exit>
+
+	
+
+
+- Future:
 	dynamicSchema={true,false}
 		Supports dynamic schema learning
 
