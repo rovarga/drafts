@@ -166,7 +166,7 @@
 					<t>
 						<list style="hanging">
 							<t hangText="Description:">
-								The &lt;start-exi> operation requests that the message enconding be
+								The &lt;start-exi> operation requests that the message encoding be
 								switched to EXI. The operation is invoked by the client and
 								validated by the server. If the server finds the parameters
 								acceptable, it will issue a positive response in the current
@@ -188,7 +188,7 @@
 									<t hangText="alignment:">
 										Requested EXI alignment. If this parameter is not present,
 										bit-packed is assumed. The following values are valid:
-										<list style="hanging:">
+										<list style="hanging">
 											<t hangText="bit-packed:">
 												Set EXI alignment to bit-packed.
 											</t>
@@ -264,7 +264,7 @@
 					<t>
 						<list style="hanging">
 							<t hangText="Description:">
-								The &lt;stop-exi> operation requests that the message enconding be
+								The &lt;stop-exi> operation requests that the message encoding be
 								switched to textual XML. The operation is invoked by the client and
 								validated by the server. If the server is able to switch the
 								encoding to XML, it will issue a positive response in the current
