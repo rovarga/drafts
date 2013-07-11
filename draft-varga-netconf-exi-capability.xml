@@ -11,6 +11,7 @@
 <?rfc inline="yes"?>
 <?rfc compact="yes"?>
 <?rfc subcompact="no"?>
+<?rfc strict="yes"?>
 <rfc category="std" docName="draft-varga-netconf-exi-capability-00" ipr="trust200902">
 	<front>
 		<title abbrev="EXI Capability">
@@ -36,15 +37,13 @@
 
 		<abstract>
 			<t>
-				The Network Configuration Protocol (NETCONF) provides mechanisms
-				to install, manipulate, and delete the configuration of network
-				devices via exchange of XML messages in textual representation.
-				Efficient XML Interchange (EXI) is a W3C-recommended binary
-				representation of XML Information Set, which is more efficient
-				from both CPU and bandwidth utilization perspective. This
-				document defines a capability-based extension to the NETCONF
-				protocol that allows peers to agree to exchange protocol
-				messages using EXI encoding.
+				The Network Configuration Protocol (NETCONF) provides mechanisms to install,
+				manipulate, and delete the configuration of network devices via exchange of XML
+				messages in textual representation. Efficient XML Interchange (EXI) is a
+				W3C-recommended binary representation of XML Information Set, which is more
+				efficient from both CPU and bandwidth utilization perspective. This document
+				defines a capability-based extension to the NETCONF protocol that allows peers
+				to agree to exchange protocol messages using EXI encoding.
 			</t>
 		</abstract>
 
@@ -60,30 +59,27 @@
 	<middle>
 		<section title="Introduction">
 			<t>
-				The NETCONF protocol <xref target="RFC6241"/> is defined in
-				terms of two peers, client and server, exchanging XML messages
-				in an RPC pattern. These messages are encoded as XML text
-				documents, which makes the exchange easily understandable by
-				human operators by simply observing them on the wire.
-				Unfortunately, this feature takes its toll on both computation
-				and network resources, as the representation contains redundant
-				information and verbose names.
+				The NETCONF protocol <xref target="RFC6241"/> is defined in terms of two peers,
+				client and server, exchanging XML messages in an RPC pattern. These messages are
+				encoded as XML text documents, which makes the exchange easily understandable by
+				human operators by simply observing them on the wire. Unfortunately, this feature
+				takes its toll on both computation and network resources, as the representation
+				contains redundant information and verbose names.
 			</t>
 
 			<t>
-				<xref target="W3C.REC-exi-20110310">Efficient XML Interchange</xref>
-				is a W3C Recommendation which defines a more efficient way of
-				encoding XML Information Set than the usual text representation.
-				This is achieved by a combination of reduced verbosity, binary
-				encoding and, optionally, pruning of non-essential information
+				<xref target="W3C.REC-exi-20110310">Efficient XML Interchange</xref> is a W3C
+				Recommendation which defines a more efficient way of encoding XML Information Set
+				than the usual text representation. This is achieved by a combination of reduced
+				verbosity, binary encoding and, optionally, pruning of non-essential information
 				like comments.
 			</t>
 
 			<t>
-				It seem advantageous to allow clients and servers participating
-				on a NETCONF session to sacrifice human readability to increase
-				processing efficiency, especially in environments with high
-				transactional activity and/or limited computing resources.
+				It seems advantageous to allow clients and servers participating on a NETCONF
+				session to sacrifice human readability to increase processing efficiency,
+				especially in environments with high transactional activity and/or limited
+				computing resources.
 			</t>
 		</section>
 
@@ -104,28 +100,25 @@
 		<section anchor="Capability" title="EXI Capability">
 			<section anchor="Overview" title="Overview">
 				<t>
-					The :exi capability indicates that the peer supports EXI
-					message encoding and is willing to use it when requested
-					to do so. The capability has no effect on data being
-					handled by the NETCONF protocol, nor does it affect
-					protocol message exchanges.
+					The :exi capability indicates that the peer supports EXI message encoding and
+					is willing to use it. The capability has no effect on data being handled by
+					the NETCONF protocol, nor does it affect protocol message exchanges.
 				</t>
 			</section>
 
 			<section anchor="Dependencies" title="Dependencies">
 				<t>
-					EXI-encoded documents are binary data, this capability may
-					only be used when the underlying transport is 8-bit clean.
-					Notably this requires use of Chunked Framing mechanism as
-					described in <xref target="RFC6242"/> when used with SSH
+					EXI-encoded documents are binary data, this capability may only be used when
+					the underlying transport is 8-bit clean and preserves message boundaries in
+					face of arbitrary binary data. Notably this requires use of Chunked Framing
+					mechanism as described in <xref target="RFC6242"/> when used with SSH
 					transport.
 				</t>
 			</section>
 
 			<section anchor="Identifier" title="Capability Identifier">
 				<t>
-					The EXI capability is identified by the following
-					capability string:
+					The EXI capability is identified by the following capability string:
 				</t>
 				<t>
 					urn:ietf:params:netconf:capability:exi:1.0
@@ -134,22 +127,18 @@
 					The identifier MAY have a the following parameters:
 					<list style="hanging">
 						<t hangText="compression:">
-							This indicates that the sender is willing to
-							perform EXI compression. The parameter MUST contain
-							a positive integral value, which indicates maximum
-							compression block size which the peer can request.
+							This indicates that the sender is willing to perform EXI compression.
+							The parameter MUST contain a positive integral value, which indicates
+							maximum compression block size which the sender can process.
 						</t>
 						<t hangText="schemas:">
-							This indicates that the sender can use
-							schema-informed grammars for EXI encoding. The
-							parameter MUST contain a value, which has to be
-							one of "builtin" or "base:1.1". The value "builtin"
-							indicates the ability to use the XML schema built
-							into the EXI specification. The value of "base:1.1"
-							is a superset of the "builtin" value and indicates
-							that the sender additionally supports
-							schema-informed EXI encoding, based on netconf.xsd
-							schema published in <xref target="RFC6241"/>.
+							This indicates that the sender can use schema-informed grammars for
+							EXI encoding. The parameter MUST contain a value, which has to be one
+							of "builtin" or "base:1.1". The value "builtin" indicates the ability
+							to use the XML schema built into the EXI specification. The value of
+							"base:1.1" is a superset of the "builtin" value and indicates that the
+							sender additionally supports schema-informed EXI encoding, based on
+							netconf.xsd schema published in <xref target="RFC6241"/>.
 						</t>
 					</list>
 				</t>
@@ -177,20 +166,28 @@
 					<t>
 						<list style="hanging">
 							<t hangText="Description:">
-								The &lt;start-exi> operation requests that the
-								receiving party switches message encoding to EXI. The
-								request is evaluated and if deemed correct, the
-								receiving party sends an acknowledgement response and
-								uses the parameters specified for encoding subsequent
-								NETCONF messages sent to the peer which has requested
-								it.
+								The &lt;start-exi> operation requests that the message enconding be
+								switched to EXI. The operation is invoked by the client and
+								validated by the server. If the server finds the parameters
+								acceptable, it will issue a positive response in the current
+								session encoding. It MUST encode all subsequent messages using EXI
+								encoding with the supplied parameters. It will also expect all
+								incoming messages to be EXI-encoded.
+
+								The client MUST NOT send any messages to the server between the
+								time is sends this request and the time it receives a response.
+								Once it receives a positive reply, it MUST encode all subsequent
+								messages using the EXI encoding with the parameters supplied in the
+								RPC.
+
+								If the operation fails, the session message encoding remains
+								unchanged.
 							</t>
 							<t hangText="Parameters:">
 								<list style="hanging">
 									<t hangText="alignment:">
-										Requested EXI alignment. If this parameter is
-										not present, bit-packed is assumed. The
-										following values are valid:
+										Requested EXI alignment. If this parameter is not present,
+										bit-packed is assumed. The following values are valid:
 										<list style="hanging:">
 											<t hangText="bit-packed:">
 												Set EXI alignment to bit-packed.
@@ -202,18 +199,15 @@
 												Set EXI alignment to pre-compression.
 											</t>
 											<t hangText="compressed:">
-												Do not specify EXI alignment, but
-												perform EXI compression instead.
+												Do not specify EXI alignment, but perform EXI
+												compression instead.
 											</t>
 										</list>
 									</t>
 									<t hangText="fidelity:">
-										Requested EXI fidelity options. If this
-										parameter is not present or empty, all
-										fidelity options are disabled. The receiving
-										party MUST use all specified fidelity options
-										when encoding messages. The following items
-										may be specified:
+										Requested EXI fidelity options. If this parameter is not
+										present or empty, all fidelity options are disabled. The 
+										following items may be specified:
 										<list style="hanging">
 											<t hangText="&lt;comments/>:">
 												EXI Preserve.comments
@@ -221,7 +215,7 @@
 											<t hangText="&lt;dtd/>:">
 												EXI Preserve.dtd
 											</t>
-											<t hangText="&lt;lexical-value/>:">
+											<t hangText="&lt;lexical-values/>:">
 												EXI Preserve.lexicalValues
 											</t>
 											<t hangText="&lt;pis/>:">
@@ -235,41 +229,82 @@
 								</list>
 							</t>
 							<t hangText="Positive Response:">
-								If the device was able to satisfy the request, an
-								&lt;rpc-reply> is sent that contains an &lt;ok> element.
+								If the device was able to satisfy the request, an &lt;rpc-reply> is
+								sent that contains an &lt;ok> element.
 							</t>
 							<t hangText="Negative Response:">
-								An &lt;rpc-error> element is included in the
-								&lt;rpc-reply> if the request cannot be completed for
-								any reason.
+								An &lt;rpc-error> element is included in the &lt;rpc-reply> if the
+								request cannot be completed for any reason.
 							</t>
 						</list>
 					</t>
+					<figure>
+						<preamble>Example:</preamble>
+						<artwork type="xml">
+<![CDATA[	<rpc message-id="101"
+		xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+		<start-exi>
+			<alignment>pre-compression</alignment>
+			<fidelity>
+				<dtd/>
+				<lexical-values/>
+			</fidelity>
+		</start-exi>
+	</rpc>
+
+	<rpc-reply message-id="101"
+		xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+		<ok/>
+	</rpc-reply>]]>
+						</artwork>
+					</figure>
 				</section>
 
 				<section anchor="stop-exi" title="&lt;stop-exi>">
 					<t>
 						<list style="hanging">
 							<t hangText="Description:">
-								The &lt;stop-exi> operation requests that the
-								receiving party stops encoding messages EXI and
-								switches back to the standard XML encoding. This
-								request is evaluated and if it can be serviced, the
-								receiving party sends a positive acknowledgement in
-								current message encoding. All subsequent NETCONF
-								messages sent by the party MUST be encoded in XML.
+								The &lt;stop-exi> operation requests that the message enconding be
+								switched to textual XML. The operation is invoked by the client and
+								validated by the server. If the server is able to switch the
+								encoding to XML, it will issue a positive response in the current
+								session encoding. It MUST encode all subsequent messages using
+								standard XML encoding. It will also expect all incoming messages to
+								be XML-encoded.
+
+								The client MUST NOT send any messages to the server between the time
+								is sends this request and the time it receives a response. Once it
+								receives a positive reply, it MUST encode all subsequent messages
+								using the standard XML encoding.
+
+								If the operation fails, the session message encoding remains
+								unchanged. If the session currently uses XML encoding, this RPC
+								is a no-operation and SHOULD NOT fail.
 							</t>
 							<t hangText="Positive Response:">
-								If the device was able to satisfy the request, an
-								&lt;rpc-reply> is sent that contains an &lt;ok> element.
+								If the device was able to satisfy the request, an &lt;rpc-reply> is
+								sent that contains an &lt;ok> element.
 							</t>
 							<t hangText="Negative Response:">
-								An &lt;rpc-error> element is included in the
-								&lt;rpc-reply> if the request cannot be completed for
-								any reason.
+								An &lt;rpc-error> element is included in the &lt;rpc-reply> if the
+								request cannot be completed for any reason.
 							</t>
 						</list>
 					</t>
+					<figure>
+						<preamble>Example:</preamble>
+						<artwork type="xml">
+<![CDATA[	<rpc message-id="101"
+		xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+		<stop-exi/>
+	</rpc>
+
+	<rpc-reply message-id="101"
+		xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+		<ok/>
+	</rpc-reply>]]>
+						</artwork>
+					</figure>
 				</section>
 			</section>
 		</section>
@@ -292,8 +327,8 @@
 
 		<section anchor="IANA-considerations" title="IANA considerations">
 			<t>
-				This document registers the following capability identifier URN in
-				the 'Network Configuration Protocol (NETCONF) Capability URNs' registry:
+				This document registers the following capability identifier URN in the 'Network
+				Configuration Protocol (NETCONF) Capability URNs' registry:
 
 				urn:ietf:params:netconf:capability:exi:1.0
 			</t>
@@ -301,10 +336,10 @@
 
 		<section anchor="Security" title="Security Considerations">
 			<t>
-				The compression option present in EXI specification may increase
-				CPU and memory requirements for encoding the response. Devices
-				should ensure this overhead is acceptable before agreeing to
-				using EXI encoding, such that no operational risks are introduced.
+				The compression option present in EXI specification may increase CPU and memory
+				requirements for encoding the response. Devices should ensure this overhead is
+				acceptable before agreeing to using EXI encoding, such that no operational risks
+				are introduced.
 			</t>
 		</section>
 
