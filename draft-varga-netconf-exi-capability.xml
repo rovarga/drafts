@@ -31,7 +31,7 @@
 			</address>
 		</author>
 
-		<date day="7" month="July" year="2013" />
+		<date day="11" month="July" year="2013" />
 
 		<workgroup>NETCONF</workgroup>
 
@@ -311,11 +311,9 @@
 
 		<section anchor="yang" title="YANG module for &lt;start-exit> and &lt;stop-exi> Operations">
 			<t>
-				The following YANG module defines the new operations introduced
-				in this document. The YANG language is defined in <xref target="RFC6020"/>.
-				Every NETCONF speaker that supports the :exi capability MUST
-				implement this YANG module.
-
+				The following YANG module defines the new operations introduced in this document.
+				The YANG language is defined in <xref target="RFC6020"/>.  Every NETCONF speaker
+				that supports the :exi capability MUST implement this YANG module.
 			</t>
 
 			<t>
@@ -343,6 +341,12 @@
 			</t>
 		</section>
 
+		<section anchor="Acknowledgements" title="Acknowledgements">
+			<t>
+				The author would like to thank Anton Tkacik, Miroslav Miklus and Stefan Kobza for
+				their contributions to this document.
+			</t>
+		</section>
 	</middle>
 
 	<back>
