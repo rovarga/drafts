@@ -4,12 +4,12 @@
 Network Working Group                                          E. Crabbe
 Internet-Draft                                              Google, Inc.
 Intended status: Standards Track                                I. Minei
-Expires: January 4, 2014                          Juniper Networks, Inc.
+Expires: January 13, 2014                         Juniper Networks, Inc.
                                                             S. Sivabalan
                                                      Cisco Systems, Inc.
                                                                 R. Varga
                                                Pantheon Technologies SRO
-                                                           July 03, 2013
+                                                           July 12, 2013
 
 
   PCEP Extensions for PCE-initiated LSP Setup in a Stateful PCE Model
@@ -52,12 +52,12 @@ Status of this Memo
 
 
 
-Crabbe, et al.           Expires January 4, 2014                [Page 1]
+Crabbe, et al.          Expires January 13, 2014                [Page 1]
 
 Internet-Draft      Stateful PCE - PCE-initiated LSP           July 2013
 
 
-   This Internet-Draft will expire on January 4, 2014.
+   This Internet-Draft will expire on January 13, 2014.
 
 Copyright Notice
 
@@ -108,7 +108,7 @@ Copyright Notice
 
 
 
-Crabbe, et al.           Expires January 4, 2014                [Page 2]
+Crabbe, et al.          Expires January 13, 2014                [Page 2]
 
 Internet-Draft      Stateful PCE - PCE-initiated LSP           July 2013
 
@@ -136,7 +136,7 @@ Table of Contents
    9.  Acknowledgements . . . . . . . . . . . . . . . . . . . . . . . 12
    10. References . . . . . . . . . . . . . . . . . . . . . . . . . . 13
      10.1. Normative References . . . . . . . . . . . . . . . . . . . 13
-     10.2. Informative References . . . . . . . . . . . . . . . . . . 13
+     10.2. Informative References . . . . . . . . . . . . . . . . . . 14
    Authors' Addresses . . . . . . . . . . . . . . . . . . . . . . . . 14
 
 
@@ -164,7 +164,7 @@ Table of Contents
 
 
 
-Crabbe, et al.           Expires January 4, 2014                [Page 3]
+Crabbe, et al.          Expires January 13, 2014                [Page 3]
 
 Internet-Draft      Stateful PCE - PCE-initiated LSP           July 2013
 
@@ -186,10 +186,10 @@ Internet-Draft      Stateful PCE - PCE-initiated LSP           July 2013
    focuses on a model where LSPs are configured on the PCC and control
    over them is delegated to the PCE.
 
-   This document describes the setup and teardown of PCE-initiated LSPs
-   under the stateful PCE model, without the need for local
-   configuration on the PCC, thus allowing for a dynamic network that is
-   centrally controlled and deployed.
+   This document describes the setup, maintenance and teardown of PCE-
+   initiated LSPs under the stateful PCE model, without the need for
+   local configuration on the PCC, thus allowing for a dynamic network
+   that is centrally controlled and deployed.
 
 
 2.  Terminology
@@ -220,7 +220,7 @@ Internet-Draft      Stateful PCE - PCE-initiated LSP           July 2013
 
 
 
-Crabbe, et al.           Expires January 4, 2014                [Page 4]
+Crabbe, et al.          Expires January 13, 2014                [Page 4]
 
 Internet-Draft      Stateful PCE - PCE-initiated LSP           July 2013
 
@@ -267,16 +267,16 @@ Internet-Draft      Stateful PCE - PCE-initiated LSP           July 2013
 
    The decision when to instantiate or delete a PCE-initiated LSP is out
    of the scope of this document.  To instantiate or delete an LSP, the
-   PCE sends a new message, the LSP Initiate Request (PCInitiate)
-   message to the PCC.  The LSP Initiate Request MUST include the SRP
-   and LSP objects, and the LSP object MUST include the Symbolic Path
-   Name TLV.
+   PCE sends a new message, the Path Computation LSP Initiate Request
+   (PCInitiate) message to the PCC.  The LSP Initiate Request MUST
+   include the SRP and LSP objects, and the LSP object MUST include the
+   Symbolic Path Name TLV.
 
    For an instantiation operation, the PCE MUST include the ERO and END-
 
 
 
-Crabbe, et al.           Expires January 4, 2014                [Page 5]
+Crabbe, et al.          Expires January 13, 2014                [Page 5]
 
 Internet-Draft      Stateful PCE - PCE-initiated LSP           July 2013
 
@@ -332,7 +332,7 @@ Internet-Draft      Stateful PCE - PCE-initiated LSP           July 2013
 
 
 
-Crabbe, et al.           Expires January 4, 2014                [Page 6]
+Crabbe, et al.          Expires January 13, 2014                [Page 6]
 
 Internet-Draft      Stateful PCE - PCE-initiated LSP           July 2013
 
@@ -388,12 +388,13 @@ Internet-Draft      Stateful PCE - PCE-initiated LSP           July 2013
 
 
 
-Crabbe, et al.           Expires January 4, 2014                [Page 7]
+Crabbe, et al.          Expires January 13, 2014                [Page 7]
 
 Internet-Draft      Stateful PCE - PCE-initiated LSP           July 2013
 
 
-   The format of a PCInitiate message is as follows:
+   The format of a PCInitiate message for LSP instantiation is as
+   follows:
 
 
    <PCInitiate Message> ::= <Common Header>
@@ -404,8 +405,8 @@ Where:
 
    <PCE-initiated-lsp-request> ::= <SRP>
                                    <LSP>
-                                   [<END-POINTS>]
-                                   [<ERO>]
+                                   <END-POINTS>
+                                   <ERO>
                                    [<attribute-list>]
 
 Where:
@@ -440,14 +441,15 @@ Where:
 
                       Figure 2: The SRP Object format
 
-   The type object is defined in [I-D.ietf-pce-stateful-pce].
 
 
 
-Crabbe, et al.           Expires January 4, 2014                [Page 8]
+Crabbe, et al.          Expires January 13, 2014                [Page 8]
 
 Internet-Draft      Stateful PCE - PCE-initiated LSP           July 2013
 
+
+   The type object is defined in [I-D.ietf-pce-stateful-pce].
 
    A new flag is defined to indicate a delete operation initiated by the
    PCE:
@@ -495,34 +497,33 @@ Internet-Draft      Stateful PCE - PCE-initiated LSP           July 2013
 
    The PCE MAY include various attributes as per [RFC5440].  The PCC
    MUST use these values in the LSP instantiation, and local values for
-   unspecified parameters.  After the LSP setup, the PCC MUST send a
-   PCRpt to the PCE, reflecting these values.  The SRP object in the
 
 
 
-Crabbe, et al.           Expires January 4, 2014                [Page 9]
+Crabbe, et al.          Expires January 13, 2014                [Page 9]
 
 Internet-Draft      Stateful PCE - PCE-initiated LSP           July 2013
 
 
+   unspecified parameters.  After the LSP setup, the PCC MUST send a
+   PCRpt to the PCE, reflecting these values.  The SRP object in the
    PCRpt message MUST echo the value of the PCInitiate message that
    triggered the setup.
 
    If the PCC determines that the LSP parameters proposed in the
-   PCInitiate message are unacceptable, it MUST trigger a PCErr and
-   include the LSP-ERROR-CODE TLV with LSP error value="Unacceptable
-   parameters" in the LSP object ([I-D.ietf-pce-stateful-pce]).  If the
-   PCC encounters an internal error during the processing of the
-   PCInitiate message, it MUST trigger a PCErr and include the LSP-
-   ERROR-CODE TLV with LSP error value = "Internal error" in the LSP
-   object ([I-D.ietf-pce-stateful-pce]).
+   PCInitiate message are unacceptable, it MUST trigger a PCErr with
+   error-type=TBD (PCE instantiation error) and error-value=1
+   (Unacceptable instantiation parameters).  If the PCC encounters an
+   internal error during the processing of the PCInitiate message, it
+   MUST trigger a PCErr with error-type=TBD (PCE instantiation error)
+   and error-value=2 (Internal error).
 
    A PCC MUST relay to the PCE errors it encounters in the setup of PCE-
-   initiated LSP by sending a PCErr.  The PCErr MUST echo the SRP-id-
-   number of the PCInitiate message.  The LSP object MUST include the
-   LSP-ERROR-CODE TLV with value "RSVP signaling error" and SHOULD
-   include the RSVP Error Spec TLV (if an ERROR SPEC was returned to the
-   PCC by a downstream node).
+   initiated LSP by sending a PCErr with error-type=TBD (PCE
+   instantiation error) and error-value=3 (RSVP signaling error).  The
+   PCErr MUST echo the SRP-id-number of the PCInitiate message.  The
+   PCEP-ERROR object SHOULD include the RSVP Error Spec TLV (if an ERROR
+   SPEC was returned to the PCC by a downstream node).
 
    A PCC SHOULD be able to place a limit on either the number of LSPs or
    the percentage of resources that are allocated to honor PCE-initiated
@@ -552,15 +553,15 @@ Internet-Draft      Stateful PCE - PCE-initiated LSP           July 2013
    upon instantiation.  The PCC MUST delegate the LSP to the PCE by
    setting the delegation bit to 1 in the PCRpt that includes the
    assigned PLSP-ID.  All subsequent messages from the PCC must have the
-   delegation bit set to 1.  The PCC cannot revoke the delegation for
 
 
 
-Crabbe, et al.           Expires January 4, 2014               [Page 10]
+Crabbe, et al.          Expires January 13, 2014               [Page 10]
 
 Internet-Draft      Stateful PCE - PCE-initiated LSP           July 2013
 
 
+   delegation bit set to 1.  The PCC cannot revoke the delegation for
    PCE-initiated LSPs for an active PCEP session.  Sending a PCRpt
    message with the delegation bit set to 0 results in a PCErr message
    of type 19 (Invalid Operation) and value TBD "Delegation for PCE-
@@ -611,8 +612,7 @@ Internet-Draft      Stateful PCE - PCE-initiated LSP           July 2013
 
 
 
-
-Crabbe, et al.           Expires January 4, 2014               [Page 11]
+Crabbe, et al.          Expires January 13, 2014               [Page 11]
 
 Internet-Draft      Stateful PCE - PCE-initiated LSP           July 2013
 
@@ -629,6 +629,10 @@ Internet-Draft      Stateful PCE - PCE-initiated LSP           July 2013
                                  request
        23       Bad parameter value
                  Error-value=1:  SYMBOLIC-PATH-NAME in use
+       24       LSP instantiation error
+                 Error-value=1:  Unacceptable instantiation parameters
+                 Error-value=2:  Internal error
+                 Error-value=3:  RSVP signaling error
 
 
 8.  Security Considerations
@@ -661,17 +665,18 @@ Internet-Draft      Stateful PCE - PCE-initiated LSP           July 2013
 9.  Acknowledgements
 
    We would like to thank Jan Medved, Ambrose Kwong and Raveendra Trovi
+
+
+
+Crabbe, et al.          Expires January 13, 2014               [Page 12]
+
+Internet-Draft      Stateful PCE - PCE-initiated LSP           July 2013
+
+
    for their contributions to this document.
 
 
 10.  References
-
-
-
-Crabbe, et al.           Expires January 4, 2014               [Page 12]
-
-Internet-Draft      Stateful PCE - PCE-initiated LSP           July 2013
-
 
 10.1.  Normative References
 
@@ -716,18 +721,19 @@ Internet-Draft      Stateful PCE - PCE-initiated LSP           July 2013
               Used to Form Encoding Rules in Various Routing Protocol
               Specifications", RFC 5511, April 2009.
 
+
+
+
+Crabbe, et al.          Expires January 13, 2014               [Page 13]
+
+Internet-Draft      Stateful PCE - PCE-initiated LSP           July 2013
+
+
 10.2.  Informative References
 
    [RFC2702]  Awduche, D., Malcolm, J., Agogbua, J., O'Dell, M., and J.
               McManus, "Requirements for Traffic Engineering Over MPLS",
               RFC 2702, September 1999.
-
-
-
-Crabbe, et al.           Expires January 4, 2014               [Page 13]
-
-Internet-Draft      Stateful PCE - PCE-initiated LSP           July 2013
-
 
    [RFC3031]  Rosen, E., Viswanathan, A., and R. Callon, "Multiprotocol
               Label Switching Architecture", RFC 3031, January 2001.
@@ -774,13 +780,7 @@ Authors' Addresses
 
 
 
-
-
-
-
-
-
-Crabbe, et al.           Expires January 4, 2014               [Page 14]
+Crabbe, et al.          Expires January 13, 2014               [Page 14]
 
 Internet-Draft      Stateful PCE - PCE-initiated LSP           July 2013
 
@@ -836,5 +836,5 @@ Internet-Draft      Stateful PCE - PCE-initiated LSP           July 2013
 
 
 
-Crabbe, et al.           Expires January 4, 2014               [Page 15]
+Crabbe, et al.          Expires January 13, 2014               [Page 15]
 

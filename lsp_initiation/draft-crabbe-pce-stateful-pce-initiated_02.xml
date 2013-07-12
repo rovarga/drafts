@@ -70,7 +70,7 @@
       </address>
     </author>
 
-    <date day="03" month="July" year="2013" />
+    <date day="12" month="July" year="2013" />
 
     <workgroup>Network Working Group</workgroup>
 
@@ -113,8 +113,8 @@
 	  and control over them is delegated to the PCE.
 	  </t>
 	  
-	  <t> This document describes
-	  the setup and teardown of PCE-initiated LSPs under the stateful PCE model, without the 
+	  <t> This document describes the setup, maintenance and teardown of PCE-initiated 
+	  LSPs under the stateful PCE model, without the 
 	  need for local configuration on the PCC, thus allowing for a dynamic network that is centrally 
 	  controlled and deployed. 
 	  </t>
@@ -190,7 +190,8 @@
 		</t>
 	
 		<t>The decision when to instantiate or delete a PCE-initiated LSP is out of the scope of this document. 
-		To instantiate or delete an LSP, the PCE sends a new message, the LSP Initiate Request (PCInitiate)
+		To instantiate or delete an LSP, the PCE sends a new message, the Path Computation 
+		LSP Initiate Request (PCInitiate)
 		message to the PCC. The LSP Initiate Request MUST include the SRP and LSP objects, and the LSP object
 		MUST include the Symbolic Path Name TLV. </t> 
 		
@@ -295,7 +296,7 @@
 		object with the R flag set (see <xref target="SRP-R-flag"/>). </t>
 		
 
-		<t>The format of a PCInitiate message is as follows:</t>
+		<t>The format of a PCInitiate message for LSP instantiation is as follows:</t>
 	<figure>
 	  <artwork><![CDATA[
 
@@ -307,8 +308,8 @@ Where:
 
    <PCE-initiated-lsp-request> ::= <SRP>
                                    <LSP>
-                                   [<END-POINTS>]
-                                   [<ERO>]
+                                   <END-POINTS>
+                                   <ERO>
                                    [<attribute-list>]
 
 Where:
@@ -397,16 +398,15 @@ Where:
 		  MUST echo the value of the PCInitiate message that triggered the setup. </t>
 		  
 		  <t> If the PCC determines that the LSP parameters proposed in the PCInitiate message are
-		  unacceptable, it MUST trigger a PCErr and include the LSP-ERROR-CODE TLV with LSP error 
-		  value="Unacceptable parameters" in the LSP object (<xref target='I-D.ietf-pce-stateful-pce'></xref>).
+		  unacceptable, it MUST trigger a PCErr with error-type=TBD (PCE instantiation error) 
+		  and error-value=1 (Unacceptable instantiation parameters). 
 		  If the PCC encounters an internal error during the processing of the PCInitiate message, it MUST
-		  trigger a PCErr and include the LSP-ERROR-CODE TLV with LSP error value = "Internal error" in the LSP
-		  object (<xref target='I-D.ietf-pce-stateful-pce'></xref>). </t>
+		  trigger a PCErr with error-type=TBD (PCE instantiation error) and error-value=2 (Internal error).</t>
 		  
 		   <t> A PCC MUST relay to the PCE errors it encounters in the setup of PCE-initiated LSP by sending
-		  a PCErr. The PCErr MUST echo the SRP-id-number of the PCInitiate message. The LSP object MUST include
-		  the LSP-ERROR-CODE TLV with value "RSVP signaling error" and SHOULD include the RSVP Error Spec TLV (if an
-		  ERROR SPEC was returned to the PCC by a downstream node).</t>
+		  a PCErr with error-type=TBD (PCE instantiation error) and error-value=3 (RSVP signaling error).
+		  The PCErr MUST echo the SRP-id-number of the PCInitiate message. The PCEP-ERROR object 
+		  SHOULD include the RSVP Error Spec TLV (if an ERROR SPEC was returned to the PCC by a downstream node).</t>
 		  
 		  <t>A PCC SHOULD be able to place a limit on either the 
 		  number of LSPs or the percentage of resources that are allocated to honor PCE-initiated 
@@ -437,18 +437,19 @@ Where:
     <section anchor="Delegation-and-cleanup" title="LSP delegation and cleanup">
 		
 		<t>PCE-initiated LSPs are automatically delegated by the PCC to the PCE upon instantiation. 
-		The PCC  MUST delegate the LSP to the PCE by  setting the delegation bit to 1 in the PCRpt that includes 
-		the assigned PLSP-ID.  All subsequent messages from the PCC must have the delegation bit set to 1. The PCC 
-		cannot revoke the delegation for PCE-initiated LSPs for an active PCEP session. Sending a PCRpt message with 
-		the delegation bit set to 0 results in a PCErr message  of type 19 (Invalid Operation) and value TBD 
+		The PCC  MUST delegate the LSP to the PCE by  setting the delegation bit to 1 in the PCRpt 
+		that includes the assigned PLSP-ID.  All subsequent messages from the PCC must have the 
+		delegation bit set to 1. The PCC cannot revoke the delegation for PCE-initiated LSPs 
+		for an active PCEP session. Sending a PCRpt message with the delegation bit set to 
+		0 results in a PCErr message  of type 19 (Invalid Operation) and value TBD 
 		"Delegation for PCE-initiated LSP cannot be revoked".</t>
 		
 		<t> A PCE MAY return a delegation to the PCC, to allow for LSP transfer between PCEs. Doing so 
 		MUST trigger the State Timeout Interval timer (<xref target='I-D.ietf-pce-stateful-pce'></xref>). </t>
 		
 		<t> In case of PCEP session failure, control over PCE-initiated LSPs reverts to the PCC 
-		at the expiration of the redelegation timeout. 
-		To obtain control of a PCE-initiated LSP, a PCE (either the original or one of its backups) sends 
+		at the expiration of the redelegation timeout. To obtain control of a PCE-initiated LSP, 
+		a PCE (either the original or one of its backups) sends 
 		a PCInitiate message, including just the SRP and LSP objects, and carrying the PLSP-ID of the LSP 
 		it wants to take control of. Receipt of a PCInitiate message with a non-zero PLSP-ID normally
 		results in the generation of a PCErr. If the State Timeout timer is running, the PCC MUST NOT 
@@ -507,6 +508,14 @@ Where:
 				<t hangText="    23">Bad parameter value
 				 <list style="hanging" hangIndent="17">
 				   <t hangText=" Error-value=1:">SYMBOLIC-PATH-NAME in use</t>
+				 </list>
+				 </t>
+				 
+				 <t hangText="    24">LSP instantiation error
+				 <list style="hanging" hangIndent="17">
+				   <t hangText=" Error-value=1:">Unacceptable instantiation parameters </t>
+				   <t hangText=" Error-value=2:">Internal error </t>
+				   <t hangText=" Error-value=3:">RSVP signaling error </t>
 				 </list>
 				 </t>
 				 
