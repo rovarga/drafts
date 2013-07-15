@@ -12,7 +12,7 @@
 <?rfc compact="yes"?>
 <?rfc subcompact="no"?>
 <?rfc strict="yes"?>
-<rfc category="std" docName="draft-varga-netconf-exi-capability-00" ipr="trust200902">
+<rfc category="std" docName="draft-varga-netconf-exi-capability-01" ipr="trust200902">
 	<front>
 		<title abbrev="EXI Capability">
 			Efficient XML Interchange Capability for NETCONF
@@ -31,7 +31,7 @@
 			</address>
 		</author>
 
-		<date day="11" month="July" year="2013" />
+		<date day="15" month="July" year="2013" />
 
 		<workgroup>NETCONF Working Group</workgroup>
 
@@ -210,19 +210,43 @@
 										following items may be specified:
 										<list style="hanging">
 											<t hangText="&lt;comments/>:">
-												EXI Preserve.comments
+												Preserve.comments EXI Fidelity option
 											</t>
 											<t hangText="&lt;dtd/>:">
-												EXI Preserve.dtd
+												Preserve.dtd EXI Fidelity option
 											</t>
 											<t hangText="&lt;lexical-values/>:">
-												EXI Preserve.lexicalValues
+												Preserve.lexicalValues EXI Fidelity option
 											</t>
 											<t hangText="&lt;pis/>:">
-												EXI Preserve.pis
+												Preserve.pis EXI Fidelity option
 											</t>
 											<t hangText="&lt;prefixes/>:">
-												EXI Preserve.prefixes
+												Preserve.prefixes EXI Fidelity option
+											</t>
+										</list>
+									</t>
+									<t hangText="schema:">
+										Optional parameter. This specifies what schema options
+										should be enabled in the EXI encoding process. The
+										following values are valid:
+										<list style="hanging">
+											<t hangText="none">
+												Do not use schema-informed grammars at all. This
+												translates to using schemaId of
+												&lt;xsd:nil>true&lt;/xsd:nil> in the EXI Options
+												header.
+											</t>
+											<t hangText="builtin">
+												Do no use schema-informed grammars, but use the
+												build-in XML data types. This translates to using
+												an empty schemaId in the EXI Options header.
+											</t>
+											<t hangText="base:1.1">
+												Use schema-informed grammar based on netconf.xsd
+												as published in <xref target="RFC6241"/> in
+												non-strict mode. The value "base:1.1" should be
+												carried in the schemaId field in the EXI Options.
 											</t>
 										</list>
 									</t>
