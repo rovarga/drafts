@@ -98,15 +98,15 @@
   <middle>
     <section title="Introduction">
       <t><xref target="RFC5440"/> describes the Path Computation Element
-      Protocol (PCEP.  PCEP defines the communication between a Path Computation
-      Client (PCC) and a Path Control Element (PCE), or between PCE and PCE,
+      Protocol (PCEP).  PCEP defines the communication between a Path Computation
+      Client (PCC) and a Path Computation Element (PCE), or between PCEs,
       enabling computation of Multiprotocol Label Switching (MPLS) for Traffic
       Engineering Label Switched Path (TE LSP) characteristics. Extensions for
-      support of GMPLS in PCEP are defined in <xref
+      support of Generalized MPLS (GMPLS) in PCEP are defined in <xref
       target='I-D.ietf-pce-gmpls-pcep-extensions'></xref> </t>
 
       <t>This document specifies a set of extensions to PCEP to enable stateful
-      control of LSPs between and across PCEP sessions in compliance with
+      control of LSPs within and across PCEP sessions in compliance with
       <xref target="RFC4657"/>.  It includes mechanisms to effect LSP state
       synchronization between PCCs and PCEs, delegation of control over LSPs to
       PCEs, and PCE control of timing and sequence of path computations within
@@ -156,8 +156,8 @@
         it. An LSP is owned by a single PCC at any given point in time.
         </t>
         
-        <t hangText="Revocation"> An operation performed by a PCC on a
-        previously delegated LSP.  Revocation revokes the rights granted to the
+        <t hangText="Revocation:"> An operation performed by a PCC on a
+        previously delegated LSP. Revocation revokes the rights granted to the
         PCE in the delegation operation. </t>
 
         <t hangText="Redelegation Timeout Interval:"> when a PCEP session is
@@ -192,8 +192,8 @@
         <t hangText="LSP Priority:"> a specific pair of MPLS setup and hold
         priority values as defined in <xref target="RFC3209"/>.</t>
 
-        <t hangText="LSP State Database:"> information about and attributes of
-        all LSPs that are being reported to one or more PCEs via LSP State
+        <t hangText="LSP State Database:"> information about all LSPs and their 
+		attributes that are being reported to one or more PCEs via LSP State
         Reports.</t>
 
         <t hangText="Minimum Cut Set:"> the minimum set of links for a specific
@@ -702,7 +702,7 @@
           <t>Allow a PCE to control computation timing and update timing across
           all LSPs that have been delegated to it.</t>
 
-          <t>Enable uninterrupted operation of PCC's LSPs in the event PCE
+          <t>Enable uninterrupted operation of PCC's LSPs in the event of a PCE
           failure or while control of LSPs is being transferred between
           PCEs.</t>
         </list>
@@ -712,7 +712,7 @@
     </section>
 
     <section anchor="Functions" title="New Functions to Support Stateful PCEs">
-      <t>Several new functions will be required in PCEP to support stateful
+      <t>Several new functions are required in PCEP to support stateful
       PCEs. A function can be initiated either from a PCC towards a PCE (C-E) or
       from a PCE towards a PCC (E-C). The new functions are:
 
@@ -1096,14 +1096,14 @@
                     |           \/     IDB=1 |
                     |           /\           | 
                     |          /   `-------->| (Expect sync)
-          (Do sync) |<--------`              | (Purge LSP State)
+          (Do sync) |<--------`              | 
                     |                        |
                     |--PCRpt,DBv=46,SYNC=1-->| (Sync start)
                     |            .           |
                     |            .           |
                     |            .           |
                     |--PCRpt,DBv=46,SYNC=1-->| (Sync done)
-                    |            .           |
+                    |            .           |(Purge LSP State)
                     |            .           |
                     |            .           |
                     |--PCRpt,DBv=47,SYNC=0-->| (Regular
@@ -1344,8 +1344,10 @@
         <section anchor="Redundant-PCEs" title="Redundant Stateful PCEs">
           <t>Note that a PCE may not have any delegated LSPs: in a redundant
           configuration where one PCE is backing up another PCE, the backup PCE
-          may have only a subset of LSPs delegated to it. The backup PCE does
-          not update any LSPs that are not delegated to it, but receives all LSP
+          may have a subset of the LSPs in the network delegated to it. The backup PCE does
+          not update any LSPs that are not delegated to it. In order to 
+		  allow the backup to operate in a hot-standby mode and avoid the need
+		  for state synchronization in case the primary fails, the backup receives all LSP
           State Reports from a PCC.  When the primary PCE for a given LSP set
           fails, after expiry of the Redelegation Timeout Interval, the PCC
           SHOULD delegate to the redundant PCE all LSPs that had been previously
@@ -1356,7 +1358,7 @@
           </t>
         </section>
 	  
-        <section anchor="PCE-failure" title="Redelegation on PCE failure">
+        <section anchor="PCE-failure" title="Redelegation on PCE Failure">
           
           <t>On failure, the goal is to: 1) avoid any traffic loss on the LSPs
           that were updated by the PCE that crashed 2) minimize the churn in the
@@ -1384,10 +1386,10 @@
           indefinetely. Note also that flushing the state should be implemented
           using make-before-break to avoid traffic loss.</t>
           
-          <t> If there is a hot-standby PCE, the Redelegation Timeout may be set
+          <t> If there is a standby PCE, the Redelegation Timeout may be set
           to 0 through policy on the PCC, causing the LSPs to be redelegated
           immediately to the PCC, which can delegate them immediately to the
-          hot-standby PCE. Assuming the State Timeout Interval is larger than
+          standby PCE. Assuming the State Timeout Interval is larger than
           the Redelegation Timeout, the LSP state will be kept intact. </t>
         </section>
 
@@ -1520,7 +1522,7 @@
           indicating that the LSP's status is 'Pending'. If the PCC decides that
           the LSP parameters proposed in the PCUpd message are unacceptable, it
           MUST report this error by including the LSP-ERROR-CODE TLV (<xref
-          target="LSP-err-code-tlv"/>) with LSP error value="Unacceptable PCUpd
+          target="LSP-err-code-tlv"/>) with LSP error value="Unacceptable
           parameters" in the LSP object in the PCRpt message to the PCE. Based
           on local policy, it MAY react further to this error by revoking the
           delegation. If the PCC receives a PCUpd message for an LSP object
@@ -1563,7 +1565,7 @@
       </section>
 
       <section anchor="Transport" title="Transport">
-        <t>A Permanent PCEP session MUST be established between a stateful PCE
+        <t>A permanent PCEP session MUST be established between a stateful PCE
         and the PCC. In the case of session failure, session reestablishment
         MUST be re-attempted per the procedures defined in <xref
         target="RFC5440"/>. </t>
@@ -1602,9 +1604,11 @@ Where:
    <state-report> ::= <SRP> 
                       <LSP>   
                       <path>
- 
+ Where:
+   <path>::= <ERO><attribute-list>
+
 Where:
-     <path> is defined in [RFC5440] and extended by PCEP extensions.
+   <attribute-list> is defined in [RFC5440] and extended by PCEP extensions.
           ]]></artwork>
         </figure>
 	
@@ -1700,8 +1704,8 @@ Where:
         the LSP).  The SRP-ID-number included in the PCRpt MUST match that in
         the PCUpd. A PCC MAY respond with multiple LSP State Reports to report
         LSP setup progress of a single LSP. In that case, the SRP-ID-number MUST
-        be included while the state of the LSP is "pending", afterwards the
-        reserved value 0x00000000 SHOULD be used..</t>
+        be included for the first message, for subsequent messages the
+        reserved value 0x00000000 SHOULD be used.</t>
 
         <t>Note that a PCC MUST process all LSP Update Requests - for example,
         an LSP Update Request is sent when a PCE returns delegation or puts an
@@ -1722,8 +1726,8 @@ Where:
         for example, if ordering of LSP set-ups is required, the PCE has to wait
         for an LSP State Report for a previous LSP before starting the update of
         the next LSP. If the PCUpd cannot be satisfied (for example due to
-        unsupported object or TLV), the PCC MUST respond with an PCErr
-        message</t>
+        unsupported object or TLV), the PCC MUST respond with a PCErr
+        message indicating the failure (see <xref target="LSP-err-code-tlv"/>).</t>
 
       </section>
 
@@ -2049,8 +2053,10 @@ Where:
           the first PCUpd with the D flag set to 0 returns the delegation. </t>
 
           <t hangText="S (SYNC - 1 bit):"> the S Flag MUST be set to 1 on each
-          LSP State Report sent from a PCC during State Synchronization. The S
-          Flag MUST be set to 0 otherwise. </t>
+          PCRpt sent from a PCC during State Synchronization. The S
+          Flag MUST be set to 0 in other PCRpt messages sent from the PCC. The
+		  S flag MAY be set to 1 in a PCUpd sent by the PCE (see section 
+		  <xref target="triggered-synchro"/>). </t>
 
           <t hangText="R(Remove - 1 bit):"> On PCRpt messages the R Flag
           indicates that the LSP has been removed from the PCC and the PCE
@@ -2302,7 +2308,7 @@ Where:
             <c>1</c><c>&nbsp;Unknown reason </c>
             <c>2</c><c>&nbsp;Limit reached for PCE-controlled LSPs</c>
             <c>3</c><c>&nbsp;Too many pending LSP update requests</c>
-            <c>4</c><c>&nbsp;Unacceptable PCUpd parameters</c>
+            <c>4</c><c>&nbsp;Unacceptable parameters</c>
             <c>5</c><c>&nbsp;Internal error</c>
             <c>6</c><c>&nbsp;LSP administratively brought down</c>
             <c>7</c><c>&nbsp;LSP preempted</c>
@@ -2568,7 +2574,7 @@ Where:
           <c>1</c><c>&nbsp;Unknown reason </c>
           <c>2</c><c>&nbsp;Limit reached for PCE-controlled LSPs</c>
           <c>3</c><c>&nbsp;Too many pending LSP update requests</c>
-          <c>4</c><c>&nbsp;Unacceptable PCUpd parameters</c>
+          <c>4</c><c>&nbsp;Unacceptable parameters</c>
           <c>5</c><c>&nbsp;Internal error</c>
           <c>6</c><c>&nbsp;LSP administratively brought down</c>
           <c>7</c><c>&nbsp;LSP preempted</c>
