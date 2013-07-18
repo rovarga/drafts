@@ -1684,9 +1684,11 @@ Where:
         configured defaults. If the LSP specified in the Update Request is already
         up, it will be re-signaled. </t>
         
-        <t> The PCC SHOULD use the make-before-break procedures described in
-        <xref target="RFC3209"/> in the re-signaling operation.  During this
-        process, two paths will briefly co-exist. The PCC MUST send separate
+        <t> The PCC SHOULD minimize the traffic interruption, and MAY 
+		use the make-before-break procedures described in
+        <xref target="RFC3209"/> in order to achieve this goal. If the
+		make-before-break procedures are used, 
+		two paths will briefly co-exist. The PCC MUST send separate
         PCRpt messages for each, identified by the LSP-IDENTIFIERS TLV. When the
         old path is torn down after the head end switches over the traffic, this
         event MUST be reported by sending a PCRpt message with the
@@ -1938,8 +1940,7 @@ Where:
         within each PCUpd and PCRpt message and MAY be carried within PCNtf and
         PCErr messages. The SRP object is used to correlate between update
         requests sent by the PCE and the error reports and state reports sent by
-        the PCC. The P flag in the common object header of the SRP object MUST
-        be set to 0.</t>
+        the PCC. </t>
         
         <t>SRP Object-Class is [TBD].</t>
 
