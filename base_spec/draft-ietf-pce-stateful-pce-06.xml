@@ -171,14 +171,10 @@
         <t hangText="State Timeout Interval:"> when a PCEP session is
         terminated, a PCC waits for this time period before flushing LSP state
         associated with that PCEP session and reverting to operator-defined
-        default parameters. The state will not be flushed in two cases: a) the
-        LSP is redelegated to another PCE before the expiration of the State
-        Timeout Interval or b)the PCC makes changes to the LSP state.  The State
+        default parameters.  The State
         Timeout Interval is a PCC-local value that can be either
         operator-configured or dynamically computed by the PCC based on local
-        policy. The State Timeout Interval value SHOULD be greater than or equal
-        to the Redelegation Timeout Interval value in order to allow for
-        redelegation of LSPs without unnecessary churn in or loss of state. </t>
+        policy. </t>
         
         <t hangText="LSP State Report:"> an operation to send LSP state
         (Operational / Admin Status, LSP attributes configured and set by a PCE,
@@ -193,8 +189,7 @@
         priority values as defined in <xref target="RFC3209"/>.</t>
 
         <t hangText="LSP State Database:"> information about all LSPs and their 
-		attributes that are being reported to one or more PCEs via LSP State
-        Reports.</t>
+		attributes.</t>
 
         <t hangText="Minimum Cut Set:"> the minimum set of links for a specific
         source destination pair which, when removed from the network, result in
@@ -772,7 +767,8 @@
 
           <t>a stateful PCE to only modify a small subset of LSP parameters,
           i.e. to set only a small subset of the overall LSP state; other
-          parameters may be set by the operator through CLI commands</t>
+          parameters may be set by the operator through command line interface 
+		  (CLI) commands</t>
 
           <t>a PCC to revert delegated LSP to an operator-defined default or to
           delegate the LSPs to a different PCE, if the PCC get disconnected from
@@ -821,7 +817,7 @@
       </section>
 
       <section anchor="Capability" title="Capability Negotiation">
-        <t>During PCEP Initialization Phase, PCEP Speakers (PCE pr PCC)
+        <t>During PCEP Initialization Phase, PCEP Speakers (PCE or PCC)
         negotiate the use of stateful PCEP extensions. A PCEP Speaker includes
         the "Stateful PCE Capability" TLV, described in <xref
         target="Capability-TLV"/>, in the OPEN Object to advertise its support
@@ -877,8 +873,8 @@
         case.  If both PCEP speakers had set the INCLUDE-DB-VERSION Flag in the
         OPEN object's STATEFUL-PCE-CAPABILITY TLV, then the LSP-DB-VERSION TLV
         MUST be included and contain the PCC's latest LSP State Database
-        version.</t>
-        
+        version. If the PCC has no state to synchronize, it will only send the 
+		end of synchronization marker. </t>
         
         <t>A PCE SHOULD NOT send PCUpd messages to a PCC before State
         Synchronization is complete. A PCC SHOULD NOT send PCReq messages to a
@@ -917,7 +913,7 @@
                     |            .           |
                     |            .           |
                     |            .           |
-                    |-----PCRpt, SYNC=1----->| (Sync done)
+                    |-----PCRpt, SYNC=1----->| 
                     |            .           |  
                     |            .           | 
                     |            .           |
@@ -925,6 +921,7 @@
                     |-----PCRpt, SYNC=0----->| (End of sync marker
                     |                        |  LSP State Report
                     |                        |  for PLSP-ID=0)
+					|                        | (Sync done)
                                                 
 	      ]]></artwork>
         </figure>
@@ -1015,9 +1012,10 @@
           session, the PCE will include the LSP-DB-VERSION TLV in its OPEN
           object, and the TLV will contain the last LSP State Database version
           received on an LSP State Report from the PCC in a previous PCEP
-          session. If a PCC's LSP State Database survived the restart, the PCC
+          session. If a PCC's LSP State Database survived the restart of a PCEP
+		  session, the PCC
           will include the LSP-DB-VERSION TLV in its OPEN object and the TLV
-          will contain the last LSP State Database version sent on an LSP State
+          will contain the latest LSP State Database version sent on an LSP State
           Report from the PCC in the previous PCEP session. If a PCEP Speaker's
           LSP State Database did not survive the restart of a PCEP session, the
           PCEP Speaker MUST NOT include the LSP-DB-VERSION TLV in the OPEN
@@ -1045,7 +1043,7 @@
           LSPs from the LSP database that are still marked as stale.
           </t>
 
-          <t>Note that a PCE MAY force State Synchronization by not including
+          <t>Note that a PCE/PCC MAY force State Synchronization by not including
           the LSP-DB-VERSION TLV in its OPEN object.</t>
 
           <t><xref target="state-sync-skipped"/> shows an example
@@ -1460,8 +1458,8 @@
           'Down'.</t>
 
           <t>There is no direct correlation between PCRep and PCRpt messages.
-          For a given LSP, multiple LSP State Reports will follow a single PC
-          Reply, as a PCC notifies a PCE of the LSP's state changes.</t>
+          For a given LSP, multiple LSP State Reports will follow a single 
+		  PCRep message, as a PCC notifies a PCE of the LSP's state changes.</t>
 
           <t>A PCC sends each LSP State Report to each stateful PCE that is
           connected to the PCC.</t>
@@ -1692,7 +1690,7 @@ Where:
         PCRpt messages for each, identified by the LSP-IDENTIFIERS TLV. When the
         old path is torn down after the head end switches over the traffic, this
         event MUST be reported by sending a PCRpt message with the
-        LSP-IDENTIFIERS-TLV or the old path, and the R bit set. Thus, a
+        LSP-IDENTIFIERS-TLV of the old path, and the R bit set. Thus, a
         make-before-break operation will typically result in at least two PCRpt
         messages, one for the new path and one for the removal of the old path
         (more messages may be possible if intermediate states are reported).
@@ -1938,7 +1936,7 @@ Where:
         
         <t> The SRP (Stateful PCE Request Parameters) object MUST be carried
         within each PCUpd and PCRpt message and MAY be carried within PCNtf and
-        PCEerr messages. The SRP object is used to correlate between update
+        PCErr messages. The SRP object is used to correlate between update
         requests sent by the PCE and the error reports and state reports sent by
         the PCC. The P flag in the common object header of the SRP object MUST
         be set to 0.</t>
@@ -2362,7 +2360,7 @@ Where:
           OPEN message are listed.</t>
 
           <t>If State Synchronization Avoidance has been enabled on a PCEP
-          session (as described in <xref target="optimized-synchro"/>) , a PCC
+          session (as described in <xref target="optimized-synchro"/>), a PCC
           MUST include the LSP-DB-VERSION TLV in each LSP Object sent out on the
           session. If the TLV is missing, the PCE will generate an error with
           error-type 6 (mandatory object missing) and Error Value 12
@@ -2371,8 +2369,10 @@ Where:
           PCC SHOULD NOT include the LSP-DB-VERSION TLV in the LSP Object and
           the PCE SHOULD ignore it were it to receive one.</t>
 
-          <t>Since a PCE does not send LSP updates to a PCC, a PCC should never
-          encounter this TLV. A PCC SHOULD ignore the LSP-DB-VERSION TLV, were
+          <t>Since a PCE does not send make changes to the LSP State Database Version,
+		  a PCC should never
+          encounter this TLV in a message from the PCE (other than the OPEN message).
+		  A PCC SHOULD ignore the LSP-DB-VERSION TLV, were
           it to receive one from a PCE. </t>
         </section>
 
@@ -2530,10 +2530,8 @@ Where:
           <c>19</c><c>&nbsp;IPV6-LSP-IDENTIFIERS</c><c>This document</c>
           <c>20</c><c>&nbsp;LSP-ERROR-CODE</c><c>This document</c>
           <c>21</c><c>&nbsp;RSVP-ERROR-SPEC</c><c>This document</c>
-          
           <c>23</c><c>&nbsp;LSP-DB-VERSION</c><c>This document</c>
           <c>24</c><c>&nbsp;PREDUNDANCY-GROUP-ID</c><c>This document</c>
-          <c>25</c><c>&nbsp;TUNNEL-ID</c><c>This document</c>
         </texttable>
       </section>
 
