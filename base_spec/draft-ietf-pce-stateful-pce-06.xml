@@ -70,7 +70,7 @@
         <email>robert.varga@pantheon.sk</email>
       </address>
     </author>
-    <date day="3" month="July" year="2013" />
+    <date day="15" month="August" year="2013" />
 
     <workgroup>Network Working Group</workgroup>
 
@@ -153,7 +153,8 @@
         to modify a subset of LSP parameters on one or more PCC's LSPs. LSPs are
         delegated from a PCC to a PCE, and are referred to as delegated LSPs.
         The PCC who owns the PCE state for the LSP has the right to delegate
-        it. An LSP is owned by a single PCC at any given point in time.
+        it. An LSP is owned by a single PCC at any given point in time. For intra-domain
+		LSPs, this PCC MUST be the PCC of the LSP head end.
         </t>
         
         <t hangText="Revocation:"> An operation performed by a PCC on a
@@ -211,17 +212,11 @@
 
     <section anchor="Motivation-And-Objectives" title="Motivation and Objectives for Stateful PCE">
 
-      <t> Editor's note: the content in this section is duplicated in <xref
-      target='I-D.zhang-pce-stateful-pce-app'></xref>.  To avoid loss of
-      information, the use cases will be removed from this document only after
-      <xref target='I-D.zhang-pce-stateful-pce-app'></xref> becomes a working
-      group document.  In the meantime, changes and updates to the use cases are
-      reflected in <xref target='I-D.zhang-pce-stateful-pce-app'></xref>.
-      </t> 
 
       <section anchor="Motivation" title="Motivation">
 
-        <t>In the following sections, several use cases are described,
+	  <t> XXXXXXXXXXXXXXXXXXXXXXX - change the reference to draft-ietf </t>
+        <t><xref target='I-D.zhang-pce-stateful-pce-app'></xref> presents several use cases,
         showcasing scenarios that benefit from the deployment of a stateful
         PCE. The scenarios apply equally to MPLS-TE and GMPLS deployments.
         </t>
@@ -296,347 +291,11 @@
           distribution, and do not allow for multiple simultaneous LSP
           priorities representing diffserv classes.</t>
 
-          <t>The following use cases demonstrate a need for visibility into
-          global inter-PCC LSP state in PCE path computations, and for a PCE
+          <t>The use cases described in <xref target='I-D.zhang-pce-stateful-pce-app'></xref> 
+		  demonstrate a need for visibility into
+          global inter-PCC LSP state in PCE path computations, and for PCE
           control of sequence and timing in altering LSP path characteristics
-          within and across PCEP sessions. Reference topologies for the use
-          cases described later in this section are shown in Figures <xref
-          target="Reference-topology-1" format="counter"/> and <xref
-          target="Reference-topology-2" format="counter"/>.</t>
-
-          <t>Unless otherwise cited, use cases assume that all LSPs listed exist
-          at the same LSP priority.</t>
-
-          <figure anchor="Reference-topology-1" title="Reference topology 1">
-            <artwork><![CDATA[
-       +-------+
-       |   A   |
-       |       |
-       +-------+
-                 \
-                   +-------+                         +-------+
-                   |   C   |-------------------------|   E   |
-                   |       |                         |       |
-                   +-------+        +-------+        +-------+
-                 /          \       |   D   |      /
-       +-------+              ------|       |------
-       |   B   |                    +-------+
-       |       |                    
-       +-------+
-             ]]></artwork>
-          </figure>
-
-          <figure anchor="Reference-topology-2" title="Reference topology 2">
-            <artwork><![CDATA[
-            +-------+        +-------+        +-------+
-            |   A   |        |   B   |        |   C   |
-            |       |        |       |        |       |
-            +---+---+        +---+---+        +---+---+
-                |                |                |
-                |                |                |
-            +---+---+        +---+---+        +---+---+
-            |   E   |        |   F   |        |   G   |
-            |       +--------+       +--------+       |
-            +-------+        +-------+        +-------+
-            ]]></artwork>
-          </figure>
-
-          <section anchor="Bin-Packing" title="Throughput Maximization and Bin Packing">
-            <t> Because LSP attribute changes in <xref target="RFC5440"/> are
-            driven by PCReq messages under control of a PCC's local timers, the
-            sequence of RSVP reservation arrivals occurring in the network will
-            be randomized. This, coupled with a lack of global LSP state
-            visibility on the part of a stateless PCE may result in suboptimal
-            throughput in a given network topology.</t>
-            
-            <t>Reference topology 2 in <xref target="Reference-topology-2"/> and
-            Tables <xref target="Throughput-link-parameters" format="counter"/>
-            and <xref target="Throughput-demand" format="counter"/> show an
-            example in which throughput is at 50% of optimal as a result of lack
-            of visibility and synchronized control across PCC's. In this
-            scenario, the decision must be made as to whether to route any
-            portion of the E-G demand, as any demand routed for this source and
-            destination will decrease system throughput.</t>
-
-            <texttable anchor="Throughput-link-parameters" 
-                       title="Link parameters for Throughput use case">
-              <ttcol align="center">Link</ttcol>
-              <ttcol align="center">Metric</ttcol>
-              <ttcol align="center">Capacity</ttcol>
-              <c>A-E</c><c>1</c><c>10</c>
-              <c>B-F</c><c>1</c><c>10</c>
-              <c>C-G</c><c>1</c><c>10</c>
-              <c>E-F</c><c>1</c><c>10</c>
-              <c>F-G</c><c>1</c><c>10</c>
-            </texttable>
-
-            <texttable anchor="Throughput-demand" 
-                       title="Throughput use case demand time series">
-              <ttcol align="center">Time</ttcol>
-              <ttcol align="center">LSP</ttcol>
-              <ttcol align="center">Src</ttcol>
-              <ttcol align="center">Dst</ttcol>
-              <ttcol align="center">Demand</ttcol>
-              <ttcol align="center">Routable</ttcol>
-              <ttcol align="center">Path</ttcol>
-              <c>1</c><c>1</c><c>E</c><c>G</c><c>10</c><c>Yes</c><c>E-F-G</c>
-              <c>2</c><c>2</c><c>A</c><c>B</c><c>10</c><c>No</c><c>---</c>
-              <c>3</c><c>1</c><c>F</c><c>C</c><c>10</c><c>No</c><c>---</c>
-            </texttable>
-
-            <t>In many cases throughput maximization becomes a bin packing
-            problem. While bin packing itself is an NP-hard problem, a number of
-            common heuristics which run in polynomial time can provide
-            significant improvements in throughput over random reservation event
-            distribution, especially when traversing links which are members of
-            the minimum cut set for a large subset of source destination pairs.
-            </t>
-
-            <t>Tables <xref target="BinPack-link-parameters" format="counter"/>
-            and <xref target="BinPack-demand" format="counter"/> show a simple
-            use case using Reference Topology 1 in <xref
-            target="Reference-topology-1"/>, where LSP state visibility and
-            control of reservation order across PCCs would result in significant
-            improvement in total throughput.</t>
-
-            <texttable anchor="BinPack-link-parameters" 
-                       title="Link parameters for Bin Packing use case">
-              <ttcol align="center">Link</ttcol>
-              <ttcol align="center">Metric</ttcol>
-              <ttcol align="center">Capacity</ttcol>
-              <c>A-C</c><c>1</c><c>10</c>
-              <c>B-C</c><c>1</c><c>10</c>
-              <c>C-E</c><c>10</c><c>5</c>
-              <c>C-D</c><c>1</c><c>10</c>
-              <c>D-E</c><c>1</c><c>10</c>
-            </texttable>
-
-            <texttable anchor="BinPack-demand" 
-                       title="Bin Packing use case demand time series">
-              <ttcol align="center">Time</ttcol>
-              <ttcol align="center">LSP</ttcol>
-              <ttcol align="center">Src</ttcol>
-              <ttcol align="center">Dst</ttcol>
-              <ttcol align="center">Demand</ttcol>
-              <ttcol align="center">Routable</ttcol>
-              <ttcol align="center">Path</ttcol>
-              <c>1</c><c>1</c><c>A</c><c>E</c><c>5</c><c>Yes</c><c>A-C-D-E</c>
-              <c>2</c><c>2</c><c>B</c><c>E</c><c>10</c><c>No</c><c>---</c>
-            </texttable>
-
-          </section>
-
-          <section anchor="Deadlock" title="Deadlock">
-            
-            <t>Most existing RSVP-TE implementations will not tear down
-            established LSPs in the event of the failure of the bandwidth
-            increase procedure detailed in <xref target="RFC3209"/>. This
-            behavior is directly implied to be correct in <xref
-            target="RFC3209"/> and is often desirable from an operator's
-            perspective, because either a) the destination prefixes are not
-            reachable via any means other than MPLS or b) this would result in
-            significant packet loss as demand is shifted to other LSPs in the
-            overlay mesh.</t>
-
-            <t>In addition, there are currently few implementations offering
-            ingress admission control at the LSP level. Again, having ingress
-            admission control on a per LSP basis is not necessarily desirable
-            from an operational perspective, as a) one must over-provision LSPs
-            significantly in order to avoid deleterious effects resulting from
-            stacked transport and flow control systems and b) there is currently
-            no efficient commonly available northbound interface for dynamic
-            configuration of per LSP ingress admission control (such an
-            interface could easily be defined using the extensions present in
-            this spec, but it beyond the scope of the current document).</t>
-
-            <t>Lack of ingress admission control coupled with the behavior in
-            <xref target="RFC3209"/> effectively results in mis-signaled LSPs
-            during periods of contention for network capacity between LSPs in a
-            given LSP priority. This in turn causes information loss in the TED
-            with regard to actual network state, resulting in LSPs sharing
-            common network interfaces with mis-signaled LSPs operating in a
-            degraded state for significant periods of time, even when unused
-            network capacity may potentially be available.</t>
-
-            <t>Reference Topology 1 in <xref target="Reference-topology-1"/> and
-            Tables <xref target="Deadlock-link-parameters" format="counter"/>
-            and <xref target="Deadlock-demand" format="counter"/> show a use
-            case that demonstrates this behavior. Two LSPs, LSP 1 and LSP 2 are
-            signaled with demand 2 and routed along paths A-C-D-E and B-C-D-E
-            respectively. At a later time, the demand of LSP 1 increases to
-            20. Under such a demand, the LSP cannot be resignaled. However, the
-            existing LSP will not be torn down. In the absence of ingress
-            policing, traffic on LSP 1 will cause degradation for traffic of LSP
-            2 (due to oversubscription on the links C-D and D-E), as well as
-            information loss in the TED with regard to the actual network
-            state.</t>
-
-            <t>The problem could be easily ameliorated by global visibility of
-            LSP state coupled with PCC- external demand measurements and
-            placement of two LSPs on disjoint links. Note that while the demand
-            of 20 for LSP 1 could never be satisfied in the given topology, what
-            could be achieved would be isolation from the ill-effects of the
-            (unsatisfiable) increased demand.</t>
-
-            <texttable anchor="Deadlock-link-parameters" 
-                       title="Link parameters for the 'Deadlock' example">
-              <ttcol align="center">Link</ttcol>
-              <ttcol align="center">Metric</ttcol>
-              <ttcol align="center">Capacity</ttcol>
-              <c>A-C</c><c>1</c><c>10</c>
-              <c>B-C</c><c>1</c><c>10</c>
-              <c>C-E</c><c>10</c><c>5</c>
-              <c>C-D</c><c>1</c><c>10</c>
-              <c>D-E</c><c>1</c><c>10</c>
-            </texttable>
-
-            <texttable anchor="Deadlock-demand" 
-                       title="Deadlock LSP and demand time series">
-              <ttcol align="center">Time</ttcol>
-              <ttcol align="center">LSP</ttcol>
-              <ttcol align="center">Src</ttcol>
-              <ttcol align="center">Dst</ttcol>
-              <ttcol align="center">Demand</ttcol>
-              <ttcol align="center">Routable</ttcol>
-              <ttcol align="center">Path</ttcol>
-              <c>1</c><c>1</c><c>A</c><c>E</c><c>2</c><c>Yes</c><c>A-C-D-E</c>
-              <c>2</c><c>2</c><c>B</c><c>E</c><c>2</c><c>Yes</c><c>B-C-D-E</c>
-              <c>3</c><c>1</c><c>A</c><c>E</c><c>20</c><c>No</c><c>---</c>
-            </texttable>
-          </section>
-
-          <section anchor="Minimum-Perturbation" title="Minimum Perturbation">
-            <t>As a result of both the lack of visibility into global LSP state
-            and the lack of control over event ordering across PCE sessions,
-            unnecessary perturbations may be introduced into the network by a
-            stateless PCE. Tables <xref target="Minimum-Perturbation-link-parms"
-            format="counter"/> and <xref target="Minimum-Perturbation-LSPs"
-            format="counter"/> show an example of an unnecessary network
-            perturbation using Reference Topology 1 in <xref
-            target="Reference-topology-1"/>.  In this case an unimportant (high
-            LSP priority value) LSP (LSP1) is first set up along the shortest
-            path.  At time 2, which is assumed to be relatively close to time 1,
-            a second more important (lower LSP-priority value) LSP is
-            established, preempting LSP 1 and shifting it to the longer A-C-E
-            path.</t>
-
-            <texttable anchor="Minimum-Perturbation-link-parms" 
-                       title="Link parameters for the 'Minimum-Perturbation' example">
-              <ttcol align="center">Link</ttcol>
-              <ttcol align="center">Metric</ttcol>
-              <ttcol align="center">Capacity</ttcol>
-              <c>A-C</c><c>1</c><c>10</c>
-              <c>B-C</c><c>1</c><c>10</c>
-              <c>C-E</c><c>10</c><c>10</c>
-              <c>C-D</c><c>1</c><c>10</c>
-              <c>D-E</c><c>1</c><c>10</c>
-            </texttable>
-
-            <texttable anchor="Minimum-Perturbation-LSPs" 
-                       title="Minimum-Perturbation LSP and demand time series">
-              <ttcol align="center">Time</ttcol>
-              <ttcol align="center">LSP</ttcol>
-              <ttcol align="center">Src</ttcol>
-              <ttcol align="center">Dst</ttcol>
-              <ttcol align="center">Demand</ttcol>
-              <ttcol align="center">LSP Prio</ttcol>
-              <ttcol align="center">Routable</ttcol>
-              <ttcol align="center">Path</ttcol>
-              <c>1</c><c>1</c><c>A</c><c>E</c><c>7</c><c>7</c><c>Yes</c><c>A-C-D-E</c>
-              <c>2</c><c>2</c><c>B</c><c>E</c><c>7</c><c>0</c><c>Yes</c><c>B-C-D-E</c>
-              <c>3</c><c>1</c><c>A</c><c>E</c><c>7</c><c>7</c><c>Yes</c><c>A-C-E</c>
-            </texttable>
-          </section>
-
-          <section anchor="Predictability" title="Predictability">
-            <t>Randomization of reservation events caused by lack of control
-            over event ordering across PCE sessions results in poor
-            predictability in LSP routing. An offline system applying a
-            consistent optimization method will produce predictable results to
-            within either the boundary of forecast error when reservations are
-            over-provisioned by reasonable margins or to the variability of the
-            signal and the forecast error when applying some hysteresis in order
-            to minimize churn.</t>
-
-            <t>Reference Topology 1 and Tables <xref
-            target="Predictability-link-parameters" format="counter"/>, <xref
-            target="Predictability-LSPs-1" format="counter"/> and <xref
-            target="Predictability-LSPs-2" format="counter"/> show the impact of
-            event ordering and predictability of LSP routing.</t>
-
-            <texttable anchor="Predictability-link-parameters" 
-                       title="Link parameters for the 'Predictability' example">
-              <ttcol align="center">Link</ttcol>
-              <ttcol align="center">Metric</ttcol>
-              <ttcol align="center">Capacity</ttcol>
-              <c>A-C</c><c>1</c><c>10</c>
-              <c>B-C</c><c>1</c><c>10</c>
-              <c>C-E</c><c>1</c><c>10</c>
-              <c>C-D</c><c>1</c><c>10</c>
-              <c>D-E</c><c>1</c><c>10</c>
-            </texttable>
-
-            <texttable anchor="Predictability-LSPs-1" 
-                       title="Predictability LSP and demand time series 1">
-              <ttcol align="center">Time</ttcol>
-              <ttcol align="center">LSP</ttcol>
-              <ttcol align="center">Src</ttcol>
-              <ttcol align="center">Dst</ttcol>
-              <ttcol align="center">Demand</ttcol>
-              <ttcol align="center">Routable</ttcol>
-              <ttcol align="center">Path</ttcol>
-              <c>1</c><c>1</c><c>A</c><c>E</c><c>7</c><c>Yes</c><c>A-C-E</c>
-              <c>2</c><c>2</c><c>B</c><c>E</c><c>7</c><c>Yes</c><c>B-C-D-E</c>
-            </texttable>
-
-            <texttable anchor="Predictability-LSPs-2" 
-                       title="Predictability LSP and demand time series 2">
-              <ttcol align="center">Time</ttcol>
-              <ttcol align="center">LSP</ttcol>
-              <ttcol align="center">Src</ttcol>
-              <ttcol align="center">Dst</ttcol>
-              <ttcol align="center">Demand</ttcol>
-              <ttcol align="center">Routable</ttcol>
-              <ttcol align="center">Path</ttcol>
-              <c>1</c><c>2</c><c>B</c><c>E</c><c>7</c><c>Yes</c><c>B-C-E</c>
-              <c>2</c><c>1</c><c>A</c><c>E</c><c>7</c><c>Yes</c><c>A-C-D-E</c>
-            </texttable>
-          </section>
-
-          <section anchor="GCO" title="Global Concurrent Optimization">
-            <t>Global Concurrent Optimization (GCO) defined in <xref
-            target="RFC5557"/> is a network optimization mechanism that is able
-            to simultaneously consider the entire topology of the network and
-            the complete set of existing TE LSPs and their existing constraints,
-            and look to optimize or reoptimize the entire network to satisfy all
-            constraints for all TE LSPs. It allows for bulk path computations in
-            order to avoid blocking problems and to achieve more optimal
-            network-wide solutions.</t>
-
-            <t>Global control of LSP operation sequence in <xref
-            target="RFC5557"/> is predicated on the use of what is effectively a
-            stateful (or semi-stateful) NMS. The NMS can be either not local to
-            the switch, in which case another northbound interface is required
-            for LSP attribute changes, or local/collocated, in which case there
-            are significant issues with efficiency in resource usage. Stateful
-            PCE adds a few features that:
-
-            <list style="symbols">
-              <t>Roll the NMS visibility into the PCE and remove the requirement
-              for an additional northbound interface</t>
-
-              <t>Allow the PCE to determine when re-optimization is needed</t> 
-              
-              <t>Allow the PCE to determine which LSPs should be re-optimized</t>
-
-              <t>Allow a PCE to control the sequence of events across multiple
-              PCCs, allowing for bulk (and truly global) optimization, LSP
-              shuffling etc.</t>
-            </list>
-            </t>
-
-          </section>
-
+          within and across PCEP sessions. </t>
         </section>
 
         <section anchor="Protocol-Configuration" title="Protocol vs. Configuration">
@@ -836,7 +495,7 @@
         <t>The PCEP protocol extensions for stateful PCEs MUST NOT be used if
         one or both PCEP Speakers have not included the Stateful PCE Capability
         TLV in their respective OPEN message. If the PCEP Speakers support the 
-        extensions of this draft, then a PCErr with code
+        extensions of this draft but did not negotiate this capability, then a PCErr with code
         "Stateful PCE capability not negotiated" (see <xref
         target="PCEP-Error-Object"/>) will be generated and the PCEP session
         will be terminated.</t>
@@ -994,12 +653,13 @@
           removal or addition of an LSP or change in any of the LSP attributes
           that would trigger a report to the PCE.  When State Synchronization
           avoidance is enabled on a PCEP session, a PCC includes the
-          LSP-DB-VERSION TLV as an optional TLV in the LSP Object on each LSP
+          LSP-DB-VERSION TLV in the LSP Object on each LSP
           State Report.  The LSP-DB-VERSION TLV contains a PCC's LSP State
           Database version. </t>
 
           <t>State Synchronization Avoidance is negotiated on a PCEP session
-          during session startup. To make sure that a PCEP peer can recognize a
+          during session startup using the INCLUDE-DB-VERSION (IDB) bit in the
+		  capabilities TLV. To make sure that a PCEP peer can recognize a
           previously connected peer even if its IP address changed, each PCEP
           peer includes the PREDUNDANCY-GROUP-ID TLV in the OPEN message.</t>
 
@@ -1342,17 +1002,20 @@
         <section anchor="Redundant-PCEs" title="Redundant Stateful PCEs">
           <t>Note that a PCE may not have any delegated LSPs: in a redundant
           configuration where one PCE is backing up another PCE, the backup PCE
-          may have a subset of the LSPs in the network delegated to it. The backup PCE does
-          not update any LSPs that are not delegated to it. In order to 
+          will not have any LSPs in the network delegated to it. The backup PCE does
+          not update any LSPs (since none are delegated to it). In order to 
 		  allow the backup to operate in a hot-standby mode and avoid the need
 		  for state synchronization in case the primary fails, the backup receives all LSP
           State Reports from a PCC.  When the primary PCE for a given LSP set
           fails, after expiry of the Redelegation Timeout Interval, the PCC
-          SHOULD delegate to the redundant PCE all LSPs that had been previously
+          SHOULD delegate to the backup PCE all LSPs that had been previously
           delegated to the failed PCE. Assuming that the State Timeout Interval
           had been configured to be larger than the Redelegation Timeout
           Interval (as recommended), this delegation change will not cause any
-          changes to the LSP parameters.
+          changes to the LSP parameters. Note that a mode of operation where the
+		  backup PCE also acts as a primary for a subset of LSPs in the network (for
+		  the purpose of splitting the load for example) is also
+		  possible.
           </t>
         </section>
 	  
@@ -1370,7 +1033,7 @@
           <t> This section summarizes the behaviour with regards to LSP
           delegation and LSP state on a PCE failure. </t>
           
-          <t>If the PCE crashses but recovers within the Redelegation Timeout,
+          <t>If the PCE crashes but recovers within the Redelegation Timeout,
           both the delegation state and the LSP state are kept intact.</t>
           
           <t>If the PCE crashes but does not recover within the Redelegation
@@ -1692,7 +1355,8 @@ Where:
         PCRpt messages for each, identified by the LSP-IDENTIFIERS TLV. When the
         old path is torn down after the head end switches over the traffic, this
         event MUST be reported by sending a PCRpt message with the
-        LSP-IDENTIFIERS-TLV of the old path, and the R bit set. Thus, a
+        LSP-IDENTIFIERS-TLV of the old path, and the R bit set. In this case,
+		the SRP object will have an SRP-id of 0. Thus, a
         make-before-break operation will typically result in at least two PCRpt
         messages, one for the new path and one for the removal of the old path
         (more messages may be possible if intermediate states are reported).
@@ -1748,11 +1412,9 @@ Where:
         negotiated on a PCEP session between the PCC and a PCE.
         </t>
         <t>
-          The definition of the PCReq message from <xref target="RFC5440"/> and
-          <xref target='I-D.ietf-pce-gmpls-pcep-extensions'></xref> is extended
-          to optionally include the LSP object after the END-POINTS object. For
-          illustration purposes, the encoding from <xref target="RFC5440"/> will
-          become:</t>
+          The definition of the PCReq message from <xref target="RFC5440"/> is extended
+          to optionally include the LSP object after the END-POINTS object. The encoding 
+		  from <xref target="RFC5440"/> will become:</t>
           <figure>
             <artwork><![CDATA[
    <PCReq Message>::= <Common Header>
@@ -1783,10 +1445,9 @@ Where:
         negotiated on a PCEP session between the PCC and the PCE and the LSP
         object was included in the corresponding PCReq message from the PCC.</t>
 
-        <t>The definition of the PCRep message from <xref target="RFC5440"/> and
-        <xref target='I-D.ietf-pce-gmpls-pcep-extensions'></xref> is extended to
-        optionally include the LSP object after the RP object.  For illustration
-        purposes, the encoding from <xref target="RFC5440"/> will become:</t>
+        <t>The definition of the PCRep message from <xref target="RFC5440"/> 
+		is extended to optionally include the LSP object after the RP object.
+        The encoding from <xref target="RFC5440"/> will become:</t>
 
         <figure>
           <artwork><![CDATA[
@@ -2029,7 +1690,8 @@ Where:
 	      ]]></artwork>
         </figure>
 	
-        <t>PLSP-ID (20 bits): An identifier for the LSP. A PCC creates a unique
+        <t>PLSP-ID (20 bits): A PCEP-specific identifier for the LSP. 
+		A PCC creates a unique
         PLSP-ID for each LSP that is constant for the life time of a PCEP
         session. The mapping of the Symbolic Path Name to PLSP-ID is
         communicated to the PCE by sending a PCRpt message containing the
@@ -2087,8 +1749,7 @@ Where:
             <t hangText="3 - GOING-DOWN:"> LSP is being torn down, resources are
             being released.</t>
             <t hangText="4 - GOING-UP:"> LSP is being signalled.</t> 
-            <t hangText="5-7 - Reserved:"> these values MUST be set to 0 on
-            transmission and MUST be ignored on receipt.</t>
+            <t hangText="5-7 - Reserved:"> these values are reserved for future use. </t>
           </list>
           </t>
         </list>
@@ -2556,7 +2217,7 @@ Where:
           <ttcol align="left" width='30%'>Description </ttcol>
           <ttcol align="left" width='55%'>Reference </ttcol>
           <c></c><c>&nbsp;</c><c></c>
-          <c>30</c><c>INCLUDE-DB-VERSION</c><c>This document</c>
+          <c>30</c><c>INCLUDE-DB-VERSION (IDB)</c><c>This document</c>
           <c>31</c><c>LSP-UPDATE-CAPABILITY</c><c>This document</c>
         </texttable>
       </section>
