@@ -116,7 +116,7 @@
 
     <section title="Terminology">
       <t>This document uses the following terms defined in <xref
-      target="RFC5440"/>: PCC, PCE, PCEP Peer.</t>
+      target="RFC5440"/>: PCC, PCE, PCEP Peer, PCEP Speaker.</t>
 
       <t>This document uses the following terms defined in <xref
       target="RFC4655"/>: TED.</t>
