@@ -70,7 +70,7 @@
         <email>robert.varga@pantheon.sk</email>
       </address>
     </author>
-    <date day="15" month="August" year="2013" />
+    <date day="19" month="August" year="2013" />
 
     <workgroup>Network Working Group</workgroup>
 
@@ -154,7 +154,7 @@
         delegated from a PCC to a PCE, and are referred to as delegated LSPs.
         The PCC who owns the PCE state for the LSP has the right to delegate
         it. An LSP is owned by a single PCC at any given point in time. For intra-domain
-		LSPs, this PCC MUST be the PCC of the LSP head end.
+		LSPs, this PCC SHOULD be the PCC of the LSP head end.
         </t>
         
         <t hangText="Revocation:"> An operation performed by a PCC on a
@@ -217,7 +217,7 @@
 
 	  <t> XXXXXXXXXXXXXXXXXXXXXXX - change the reference to draft-ietf </t>
         <t><xref target='I-D.zhang-pce-stateful-pce-app'></xref> presents several use cases,
-        showcasing scenarios that benefit from the deployment of a stateful
+        demonstrating scenarios that benefit from the deployment of a stateful
         PCE. The scenarios apply equally to MPLS-TE and GMPLS deployments.
         </t>
         
@@ -659,7 +659,7 @@
 
           <t>State Synchronization Avoidance is negotiated on a PCEP session
           during session startup using the INCLUDE-DB-VERSION (IDB) bit in the
-		  capabilities TLV. To make sure that a PCEP peer can recognize a
+		  capabilities TLV. To ensure that a PCEP peer can recognize a
           previously connected peer even if its IP address changed, each PCEP
           peer includes the PREDUNDANCY-GROUP-ID TLV in the OPEN message.</t>
 
