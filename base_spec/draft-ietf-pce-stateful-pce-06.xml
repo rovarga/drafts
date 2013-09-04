@@ -154,7 +154,7 @@
         delegated from a PCC to a PCE, and are referred to as delegated LSPs.
         The PCC who owns the PCE state for the LSP has the right to delegate
         it. An LSP is owned by a single PCC at any given point in time. For intra-domain
-		LSPs, this PCC SHOULD be the PCC of the LSP head end.
+        LSPs, this PCC SHOULD be the PCC of the LSP head end.
         </t>
         
         <t hangText="Revocation:"> An operation performed by a PCC on a
@@ -215,8 +215,7 @@
 
       <section anchor="Motivation" title="Motivation">
 
-	  <t> XXXXXXXXXXXXXXXXXXXXXXX - change the reference to draft-ietf </t>
-        <t><xref target='I-D.zhang-pce-stateful-pce-app'></xref> presents several use cases,
+        <t><xref target='I-D.ietf-pce-stateful-pce-app'></xref> presents several use cases,
         demonstrating scenarios that benefit from the deployment of a stateful
         PCE. The scenarios apply equally to MPLS-TE and GMPLS deployments.
         </t>
@@ -291,7 +290,7 @@
           distribution, and do not allow for multiple simultaneous LSP
           priorities representing diffserv classes.</t>
 
-          <t>The use cases described in <xref target='I-D.zhang-pce-stateful-pce-app'></xref> 
+          <t>The use cases described in <xref target='I-D.ietf-pce-stateful-pce-app'></xref> 
 		  demonstrate a need for visibility into
           global inter-PCC LSP state in PCE path computations, and for PCE
           control of sequence and timing in altering LSP path characteristics
@@ -580,7 +579,7 @@
                     |-----PCRpt, SYNC=0----->| (End of sync marker
                     |                        |  LSP State Report
                     |                        |  for PLSP-ID=0)
-					|                        | (Sync done)
+                    |                        | (Sync done)
                                                 
 	      ]]></artwork>
         </figure>
@@ -1000,22 +999,19 @@
         </section>
 
         <section anchor="Redundant-PCEs" title="Redundant Stateful PCEs">
-          <t>Note that a PCE may not have any delegated LSPs: in a redundant
+         <t>Note that a PCE may not have any delegated LSPs: in a redundant
           configuration where one PCE is backing up another PCE, the backup PCE
-          will not have any LSPs in the network delegated to it. The backup PCE does
-          not update any LSPs (since none are delegated to it). In order to 
+          may have a subset of the LSPs in the network delegated to it. The backup PCE does
+          not update any LSPs that are not delegated to it. In order to 
 		  allow the backup to operate in a hot-standby mode and avoid the need
 		  for state synchronization in case the primary fails, the backup receives all LSP
           State Reports from a PCC.  When the primary PCE for a given LSP set
           fails, after expiry of the Redelegation Timeout Interval, the PCC
-          SHOULD delegate to the backup PCE all LSPs that had been previously
+          SHOULD delegate to the redundant PCE all LSPs that had been previously
           delegated to the failed PCE. Assuming that the State Timeout Interval
           had been configured to be larger than the Redelegation Timeout
           Interval (as recommended), this delegation change will not cause any
-          changes to the LSP parameters. Note that a mode of operation where the
-		  backup PCE also acts as a primary for a subset of LSPs in the network (for
-		  the purpose of splitting the load for example) is also
-		  possible.
+          changes to the LSP parameters.
           </t>
         </section>
 	  
@@ -2031,7 +2027,7 @@ Where:
           PCC SHOULD NOT include the LSP-DB-VERSION TLV in the LSP Object and
           the PCE SHOULD ignore it were it to receive one.</t>
 
-          <t>Since a PCE does not send make changes to the LSP State Database Version,
+          <t>Since a PCE does not make changes to the LSP State Database Version,
 		  a PCC should never
           encounter this TLV in a message from the PCE (other than the OPEN message).
 		  A PCC SHOULD ignore the LSP-DB-VERSION TLV, were
@@ -2466,6 +2462,7 @@ Where:
       Xian Zhang for helpful comments and discussions.</t>
     </section>
   </middle>
+  
 
   <back>
     <references title="Normative References">
@@ -2495,7 +2492,7 @@ Where:
       <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5394.xml"?>
       <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.5557.xml"?>
       <?rfc include="reference.I-D.sivabalan-pce-disco-stateful"?>
-      <?rfc include="reference.I-D.zhang-pce-stateful-pce-app"?>
+      <?rfc include="reference.I-D.ietf-pce-stateful-pce-app"?>
 
       <reference anchor="MXMN-TE" target=""> 
         <front>
