@@ -519,10 +519,7 @@
         <t> The end of synchronization marker is a PCRpt message with the SYNC
         Flag set to 0 for an LSP Object with PLSP-ID equal to the reserved value
         0. The LSP Object does not include the SYMBOLIC-PATH-NAME TLV in this
-        case.  If both PCEP speakers had set the INCLUDE-DB-VERSION Flag in the
-        OPEN object's STATEFUL-PCE-CAPABILITY TLV, then the LSP-DB-VERSION TLV
-        MUST be included and contain the PCC's latest LSP State Database
-        version. If the PCC has no state to synchronize, it will only send the 
+        case. If the PCC has no state to synchronize, it will only send the 
 		end of synchronization marker. </t>
         
         <t>A PCE SHOULD NOT send PCUpd messages to a PCC before State
@@ -621,203 +618,10 @@
                     |                        |
 	      ]]></artwork>
         </figure>
-
-        <section anchor="optimized-synchro" title="State Synchronization Avoidance">
-          
-          <t>State Synchronization MAY be skipped following a PCEP session
-          restart if the state of both PCEP peers did not change during the
-          period prior to session re-initialization. To be able to make this
-          determination, state must be exchanged and maintained by both PCE and
-          PCC during normal operation. This is accomplished by keeping track of
-          the changes to the LSP State Database, using a database version called
-          the LSP State Database Version.</t>
-          
-          <t> The LSP State Database version is an unsigned 64-bit value that
-          MUST be incremented by 1 for each successive change in the LSP state
-          database. The LSP State Database version MUST start at 1 and may wrap
-          around. Values 0 and 0xFFFFFFFFFFFFFFFF are reserved. The PCC is the
-          owner of the LSP State Database version, which is incremented each
-          time a change is made to the PCC's local LSP State Database.
-          Operations that trigger a change to the local LSP State database
-          include a change in the LSP operational state, delegation of an LSP,
-          removal or addition of an LSP or change in any of the LSP attributes
-          that would trigger a report to the PCE.  When State Synchronization
-          avoidance is enabled on a PCEP session, a PCC includes the
-          LSP-DB-VERSION TLV in the LSP Object on each LSP
-          State Report.  The LSP-DB-VERSION TLV contains a PCC's LSP State
-          Database version. </t>
-
-          <t>State Synchronization Avoidance is negotiated on a PCEP session
-          during session startup using the INCLUDE-DB-VERSION (IDB) bit in the
-		  capabilities TLV. To ensure that a PCEP peer can recognize a
-          previously connected peer even if its IP address changed, each PCEP
-          peer includes the PREDUNDANCY-GROUP-ID TLV in the OPEN message.</t>
-
-          <t>If both PCEP speakers set the INCLUDE-DB-VERSION Flag in the OPEN
-          object's STATEFUL-PCE-CAPABILITY TLV to 1, the PCC will include the
-          LSP-DB-VERSION TLV in each LSP Object. The TLV will contain the PCC's
-          latest LSP State Database version.</t>
-
-          <t>If a PCE's LSP State Database survived the restart of a PCEP
-          session, the PCE will include the LSP-DB-VERSION TLV in its OPEN
-          object, and the TLV will contain the last LSP State Database version
-          received on an LSP State Report from the PCC in a previous PCEP
-          session. If a PCC's LSP State Database survived the restart of a PCEP
-		  session, the PCC
-          will include the LSP-DB-VERSION TLV in its OPEN object and the TLV
-          will contain the latest LSP State Database version sent on an LSP State
-          Report from the PCC in the previous PCEP session. If a PCEP Speaker's
-          LSP State Database did not survive the restart of a PCEP session, the
-          PCEP Speaker MUST NOT include the LSP-DB-VERSION TLV in the OPEN
-          Object.</t>
-
-          <t>If both PCEP Speakers include the LSP-DB-VERSION TLV in the OPEN
-          Object and the TLV values match, the PCC MAY skip State
-          Synchronization.  Otherwise, the PCC MUST perform State
-          Synchronization. If the PCC attempts to skip State Synchronization
-          (i.e. the SYNC Flag = 0 on the first LSP State Report from the PCC),
-          the PCE MUST send back a PCError with Error-type 20 Error-value 2 'LSP
-          Database version mismatch', and close the PCEP session.</t>
-	  
-          <t>If state synchronization is required, then prior to completing the
-          Initialization phase, the PCE MUST mark any LSPs in the LSP database
-          that were previously reported by the PCC as stale.  When the PCC
-          reports an LSP during state synchronization, if the LSP already exists
-          in the LSP database, the PCE MUST update the LSP database and clear
-          the stale marker from the LSP.  When it has finished state
-          synchronization, the PCC MUST immediately send a PCRpt message
-          containing a state report with an LSP object containing an PLSP-ID of
-          0 and with the SYNC flag set to 0 (see <xref target="Synchronization"
-          />). This state report indicates to the PCE that state synchronization
-          has completed.  On receiving this state report, the PCE MUST purge any
-          LSPs from the LSP database that are still marked as stale.
-          </t>
-
-          <t>Note that a PCE/PCC MAY force State Synchronization by not including
-          the LSP-DB-VERSION TLV in its OPEN object.</t>
-
-          <t><xref target="state-sync-skipped"/> shows an example
-          sequence where State Synchronization is skipped.</t>
-
-          <figure anchor="state-sync-skipped" title="State Synchronization skipped">
-            <artwork><![CDATA[
-                  +-+-+                    +-+-+
-                  |PCC|                    |PCE|
-                  +-+-+                    +-+-+
-                    |                        |
-                    |--Open--,               |
-                    |  DBv=42 \    ,---Open--|
-                    |   IDB=1  \  /   DBv=42 |
-                    |           \/     IDB=1 |
-                    |           /\           | 
-                    |          /   `-------->| (OK to skip sync)
-        (Skip sync) |<--------`              |  
-                    |            .           |
-                    |            .           |
-                    |            .           |
-                    |                        |
-                    |--PCRpt,DBv=43,SYNC=0-->| (Regular
-                    |                        |  LSP State Report)
-                    |--PCRpt,DBv=44,SYNC=0-->| (Regular
-                    |                        |  LSP State Report)
-                    |--PCRpt,DBv=45,SYNC=0-->|
-                    |                        |
-              ]]></artwork>
-          </figure>
-
-          <t><xref target="state-sync-performed"/> shows an example sequence
-          where State Synchronization is performed due to LSP State Database
-          version mismatch during the PCEP session setup. Note that the same
-          State Synchronization sequence would happen if either the PCC or the
-          PCE would not include the LSP-DB-VERSION TLV in their respective Open
-          messages.</t>
-
-          <figure anchor="state-sync-performed" title="State Synchronization performed">
-            <artwork><![CDATA[
-                  +-+-+                    +-+-+
-                  |PCC|                    |PCE|
-                  +-+-+                    +-+-+
-                    |                        |
-                    |--Open--,               |
-                    |  DBv=46 \    ,---Open--|
-                    |   IDB=1  \  /   DBv=42 |
-                    |           \/     IDB=1 |
-                    |           /\           | 
-                    |          /   `-------->| (Expect sync)
-          (Do sync) |<--------`              | 
-                    |                        |
-                    |--PCRpt,DBv=46,SYNC=1-->| (Sync start)
-                    |            .           |
-                    |            .           |
-                    |            .           |
-                    |--PCRpt,DBv=46,SYNC=1-->| (Sync done)
-                    |            .           |(Purge LSP State)
-                    |            .           |
-                    |            .           |
-                    |--PCRpt,DBv=47,SYNC=0-->| (Regular
-                    |                        |  LSP State Report)
-                    |--PCRpt,DBv=48,SYNC=0-->| (Regular
-                    |                        |  LSP State Report)
-                    |--PCRpt,DBv=49,SYNC=0-->|
-                    |                        |
-	    ]]></artwork>
-          </figure>
-
-          <t><xref target="state-sync-skipped-no-dbver"/> shows an example
-          sequence where State Synchronization is skipped, but because one or
-          both PCEP Speakers set the INCLUDE-DB-VERSION Flag to 0, the PCC does
-          not send LSP-DB-VERSION TLVs to the PCE. If the current PCEP session
-          restarts, the PCEP Speakers will have to perform State
-          Synchronization, since the PCE will not know the PCC's latest LSP
-          State Database version.</t>
-
-
-          <figure anchor="state-sync-skipped-no-dbver" title="State Synchronization skipped, no LSP-DB-VERSION TLVs sent from PCC">
-            <artwork><![CDATA[
-                  +-+-+                    +-+-+
-                  |PCC|                    |PCE|
-                  +-+-+                    +-+-+
-                    |                        |
-                    |--Open--,               |
-                    |  DBv=42 \    ,---Open--|
-                    |   IDB=0  \  /   DBv=42 |
-                    |           \/     IDB=0 |
-                    |           /\           | 
-                    |          /   `-------->| (OK to skip sync)
-        (Skip sync) |<--------`              | 
-                    |            .           |
-                    |            .           |
-                    |            .           |
-                    |------PCRpt,SYNC=0----->| (Regular
-                    |                        |  LSP State Report)
-                    |------PCRpt,SYNC=0----->| (Regular
-                    |                        |  LSP State Report)
-                    |------PCRpt,SYNC=0----->|
-                    |                        |
-              ]]></artwork>
-          </figure>
-
-        </section>
         
-        <section anchor="triggered-synchro" title="PCE-triggered State Synchronization">
-          
-          <t> Because the accuracy of the computations performed by the PCE is
-          tied to the accuracy of the view the PCE has on the state of the LSPs,
-          it can be beneficial to be able to resynchronize this state even after
-          the session has established. The PCE may use this approach to
-          continuously sanity check its state against the network, or to recover
-          from error conditions without having to tear down sessions. </t>
-          
-          <t> To trigger a resynchronization with a PCC, the PCE MUST first mark
-          any LSPs in the LSP database that were previously reported by the PCC
-          as stale and then send a PCUpd for an LSP object containing a PLSP-ID
-          of 0 and with the SYNC flag set to 1. This PCUpd message is the
-          trigger for the PCC to enter the synchronization phase as described in
-          <xref target="optimized-synchro"/> and start sending PCRpt
-          messages. After the receipt of the end-of-synchronization marker, the
-          PCE will purge LSPs which were not refreshed. </t>
-        </section>
-        
+		<t> Optimizations to the synchronization procedures and alternate
+        mechanisms of providing the synchronization function are outside the scope of this document and will be
+        discussed in separate documents. </t>
       </section>
 
       <section anchor="Delegation" title="LSP Delegation">
@@ -1253,7 +1057,7 @@ Where:
                       <LSP>   
                       <path>
  Where:
-   <path>::= <ERO><attribute-list>
+   <path>::= <ERO><attribute-list>[<RRO>]
 
 Where:
    <attribute-list> is defined in [RFC5440] and extended by PCEP extensions.
@@ -1285,6 +1089,9 @@ Where:
         <t> If the LSP transitioned to non-operational state, the PCC SHOULD
         include the LSP-ERROR-TLV (<xref target="LSP-err-code-tlv"/>) with the
         relevant LSP Error Code to report the error to the PCE. </t>
+		
+		<t> The RRO SHOULD be included by the PCC when the path is up, but MAY be
+		omitted if the path is down due to a signaling error or another failure. </t> 
       </section>
 
       <section anchor="PCUpd" title="The PCUpd Message">
@@ -1393,6 +1200,27 @@ Where:
         MUST be the one from the PCUpd that triggered the error.  If the error is
         unsolicited, the SRP object MAY be omitted. This is equivalent to including
         an SRP object with SRP-ID-number equal to the reserved value 0x00000000. </t>
+	
+       <t>The format of a PCErr message from <xref target="RFC5440"/> is extended as follows:</t>
+        <figure>
+          <artwork><![CDATA[
+   <PCErr Message> ::= <Common Header>
+                     ( <error-obj-list> [<Open>] ) | <error>
+                     [<error-list>]
+
+   <error-obj-list>::=<PCEP-ERROR>[<error-obj-list>]
+
+   <error>::=[<request-id-list> | <stateful-request-id-list>]  <<<< new
+              <error-obj-list>
+
+   <request-id-list>::=<RP>[<request-id-list>]
+   
+   <stateful-request-id-list>::=<SRP>[<stateful-request-id-list>]  <<< new 
+
+   <error-list>::=<error>[<error-list>] 
+   
+          ]]></artwork>
+        </figure>	
       </section> 
 	
       <section anchor="PCReq" title="The PCReq Message">
@@ -1482,7 +1310,7 @@ Where:
   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
   |               Type=[TBD]      |            Length=4           |
   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-  |                             Flags                         |S|U|
+  |                             Flags                           |U|
   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
              ]]></artwork>
           </figure>
@@ -1500,10 +1328,6 @@ Where:
             Flag must be advertised by both a PCC and a PCE for PCUpd messages
             to be allowed on a PCEP session.</t>
 
-            <t hangText="S (INCLUDE-DB-VERSION - 1 bit):">if set to 1 by both
-            PCEP Speakers, the PCC will include the LSP-DB-VERSION TLV in each
-            LSP Object.</t>
-
           </list>
 
           Unassigned bits are considered reserved. They MUST be set to 0 on
@@ -1513,74 +1337,10 @@ Where:
           that are signaled via RSVP, as well as the objects, TLVs and
           procedures defined in this document.
           </t>
-
-        </section>
       
-        <section anchor="DB-VERSION-TLV-OPEN" title="LSP State Database Version TLV">
-	
-          <t>LSP-DB-VERSION is an optional TLV that MAY be included in the OPEN
-          Object when a PCEP Speaker wishes to determine if State
-          Synchronization can be skipped when a PCEP session is restarted. If
-          sent from a PCE, the TLV contains the local LSP State Database version
-          from the last valid LSP State Report received from a PCC. If sent from
-          a PCC, the TLV contains the PCC's local LSP State Database version,
-          which is incremented each time the LSP State Database is updated.</t>
-
-          <t>The format of the LSP-DB-VERSION TLV is shown in the following
-          figure:</t>
-
-          <figure anchor="DB-VERSION-Fmt" title="LSP-DB-VERSION TLV format">
-            <artwork><![CDATA[
-   0                   1                   2                   3
-   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-  |           Type=[TBD]          |            Length=8           |
-  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-  |                      LSP State DB Version                     |
-  |                                                               |
-  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-	         ]]></artwork>
-          </figure>
-
-          <t>The type of the TLV is [TBD] and it has a fixed length of 8 octets.
-          The value contains a 64-bit unsigned integer.</t>
-
         </section>
 
-        <section anchor="PREDUNDANCY-GROUP-ID-TLV-OPEN" title="PCE Redundancy Group Identifier TLV">
-          
-          <t>PREDUNDANCY-GROUP-ID is an optional TLV that MAY be included in the
-          OPEN Object when a PCEP Speaker wishes to determine if State
-          Synchronization can be skipped when a PCEP session is restarted. It
-          contains a unique identifier for the node that does not change during
-          the life time of the PCEP Speaker. It identifies the PCEP Speaker to
-          its peers if the Speaker's IP address changed.</t>
-          
-
-          <t>The format of the PREDUNDANCY-GROUP-ID TLV is shown in the
-          following figure:</t>
-
-          <figure anchor="red-id-Fmt" title="PREDUNDANCY-GROUP-ID TLV format">
-            <artwork><![CDATA[
-   0                   1                   2                   3
-   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-  |           Type=[TBD]          |       Length (variable)       |
-  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-  |                                                               |
-  //                 PCE redundancy group Identifier              //
-  |                                                               |
-  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-            ]]></artwork>
-          </figure>
-
-          <t>The type of the TLV is [TBD] and it has a a variable length, which
-          MUST be greater than 0.  The value contains a node identifier that MUST
-          be unique in the network. The node identifier MAY be configured by an
-          operator. If the node identifier is not configured by the operator, it
-          can be derived from a PCC's MAC address or serial number.</t>
-
-        </section>
+        
 
       </section>
       
@@ -1622,8 +1382,8 @@ Where:
         
         <t>Flags (32 bits): None defined yet. </t>
         
-        <t>SRP-ID-number (32 bits): The SRP-ID-number value combined with the
-        source IP address of the PCC and the PCE uniquely identify the operation
+        <t>SRP-ID-number (32 bits): The SRP-ID-number value in the scope of the current
+        PCEP session uniquely identify the operation
         that the PCE has requested the PCC to perform on a given LSP.  The
         SRP-ID-number is incremented each time a new request is sent to the PCC,
         and may wrap around.</t>
@@ -1672,8 +1432,6 @@ Where:
   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
   |                PLSP-ID                |     Flags |  O|A|R|S|D|
   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-  |         Reserved                            |  LSP-sig-type   |
-  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
   //                        TLVs                                 //
   |                                                               |
   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -1705,9 +1463,7 @@ Where:
 
           <t hangText="S (SYNC - 1 bit):"> the S Flag MUST be set to 1 on each
           PCRpt sent from a PCC during State Synchronization. The S
-          Flag MUST be set to 0 in other PCRpt messages sent from the PCC. The
-		  S flag MAY be set to 1 in a PCUpd sent by the PCE (see section 
-		  <xref target="triggered-synchro"/>). </t>
+          Flag MUST be set to 0 in other PCRpt messages sent from the PCC.</t>
 
           <t hangText="R(Remove - 1 bit):"> On PCRpt messages the R Flag
           indicates that the LSP has been removed from the PCC and the PCE
@@ -1746,19 +1502,8 @@ Where:
         Unassigned bits are considered reserved. They MUST be set to 0 on
         transmission and MUST be ignored on receipt.
         </t>
-
-        <t> LSP-sig-type (8 bits) - identifies the method used for signaling the
-        LSP. If a PCEP speaker receives an LSP object with LSP-sig-type that had
-        not been previously negotiated, a PCErr with error type 19, error value
-        5, "Unsupported LSP signaling type", (see <xref
-        target="PCEP-Error-Object"/>) MUST be sent.  If there is a mismatch in
-        the LSP signaling type for a particular LSP between the PCEP speakers, a
-        PCErr with error type 19, error value 4, "Mismatched LSP signaling type"
-        (see <xref target="PCEP-Error-Object"/>) MUST be sent by the party
-        identifying the mismatch.
-        </t> 
-        
-        <t> Optional TLVs that may be included in the LSP Object are described
+    
+        <t> TLVs that may be included in the LSP Object are described
         in the following sections. </t>
 
         <section anchor="LSP-Identifiers-TLVs" title="LSP Identifiers TLVs">
@@ -1921,6 +1666,54 @@ Where:
 
         </section>
 
+		<section  anchor="LSP-sig-type-tlv" title="LSP Signaling Type TLV">
+		
+		<t> The LSP Signaling Type TLV is an optional TLV for use in the LSP object
+        and it is used to identify the method used for signaling the LSP. Support for different 
+        signaling methods MUST be negotiated at session init time. RSVP is the default 
+        signaling method used, and its support is implicit in the negotiation of the stateful
+		PCE capability. </t>
+		
+        <t> When this TLV is not included, RSVP is assumed. 
+		If a PCEP speaker receives an LSP object with LSP-sig-type that had
+        not been previously negotiated, a PCErr with error type 19, error value
+        5, "Unsupported LSP signaling type", (see <xref
+        target="PCEP-Error-Object"/>) MUST be sent.  If there is a mismatch in
+        the LSP signaling type for a particular LSP between the PCEP speakers, a
+        PCErr with error type 19, error value 4, "Mismatched LSP signaling type"
+        (see <xref target="PCEP-Error-Object"/>) MUST be sent by the party
+        identifying the mismatch. </t> 
+
+		
+        <t>The format of the LSP-SIG-TYPE TLV is shown in the following figure:</t>
+
+          <figure anchor="LSP-Sig-type-TLV-Fmt" title="LSP-SIG-TYPE TLV format">
+            <artwork><![CDATA[
+   0                   1                   2                   3
+   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |           Type=[TBD]          |            Length=4           |
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |                          LSP Signaling Type                   |
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	  ]]></artwork>
+          </figure>
+
+          <t>The type of the TLV is [TBD] and it has a fixed length of 4 octets.
+          The value identifies the protocol used for signaling.</t>
+          
+          <t> The following LSP Signaling Types are defined: </t> 
+          <texttable anchor="LSP-SIG-TYPE-CP-values" style="none" suppress-title="true">
+            <ttcol align="center" width='20%'>Value</ttcol>
+            <ttcol align="left" width='40%'>Meaning </ttcol>
+
+            <c>0</c><c>&nbsp;RSVP </c>
+          </texttable>
+        
+		<t> Support for other TLVs will be defined in other documents. </t> 
+		</section>
+		
+		
         <section anchor="LSP-err-code-tlv" title="LSP Error Code TLV">
           
           <t>The LSP Error code TLV is an optional TLV for use in the LSP object
@@ -2003,38 +1796,6 @@ Where:
 
         </section>
 
-        <section anchor="LSP-DB-VERSION-TLV-LSP" title="LSP State Database Version TLV">
-          <t>The LSP-DB-VERSION TLV can be included as an optional TLV in the
-          LSP object. The LSP-DB-VERSION TLV is discussed in <xref
-          target="optimized-synchro"/> which covers state synchronization
-          avoidance. The format of the TLV is described in <xref
-          target="DB-VERSION-TLV-OPEN"/>, where the details of its use in the
-          OPEN message are listed.</t>
-
-          <t>If State Synchronization Avoidance has been enabled on a PCEP
-          session (as described in <xref target="optimized-synchro"/>), a PCC
-          MUST include the LSP-DB-VERSION TLV in each LSP Object sent out on the
-          session. If the TLV is missing, the PCE will generate an error with
-          error-type 6 (mandatory object missing) and Error Value 12
-          (LSP-DB-VERSION TLV missing) and close the session.  If State
-          Synchronization Avoidance has not been enabled on a PCEP session, the
-          PCC SHOULD NOT include the LSP-DB-VERSION TLV in the LSP Object and
-          the PCE SHOULD ignore it were it to receive one.</t>
-
-          <t>Since a PCE does not make changes to the LSP State Database Version,
-		  a PCC should never
-          encounter this TLV in a message from the PCE (other than the OPEN message).
-		  A PCC SHOULD ignore the LSP-DB-VERSION TLV, were
-          it to receive one from a PCE. </t>
-        </section>
-
-        <section anchor="Delegation-Parameters" title="Delegation Parameters TLVs">
-          <t>Multiple delegation parameters, such as sub-delegation permissions,
-          authentication parameters, etc. need to be communicated from a PCC to
-          a PCE during the delegation operation. Delegation parameters will be
-          carried in multiple delegation parameter TLVs, which will be defined
-          in future revisions of this document.</t>
-        </section>
       </section>
       
       <section anchor="LSPA-Object-Format" title="Optional TLVs for the LSPA Object">
@@ -2127,7 +1888,6 @@ Where:
             <t hangText=" Error-value=9:">ERO Object missing</t>
             <t hangText=" Error-value=10:">SRP Object missing</t> 
             <t hangText=" Error-value=11:">LSP-IDENTIFIERS TLV missing</t> 
-            <t hangText=" Error-value=12:">LSP-DB-VERSION TLV missing</t>
 
           </list>
           </t>
@@ -2157,11 +1917,6 @@ Where:
             not process (an otherwise valid) LSP State Report.  The PCEP-ERROR
             Object is followed by the LSP Object that identifies the LSP.</t>
 
-            <t hangText=" Error-value=2:">LSP Database version mismatch.</t>
-
-            <t hangText=" Error-value=3:">The LSP-DB-VERSION TLV Missing when
-            State Synchronization Avoidance enabled.</t>
-
           </list>
           </t>
         </list>
@@ -2182,8 +1937,6 @@ Where:
           <c>19</c><c>&nbsp;IPV6-LSP-IDENTIFIERS</c><c>This document</c>
           <c>20</c><c>&nbsp;LSP-ERROR-CODE</c><c>This document</c>
           <c>21</c><c>&nbsp;RSVP-ERROR-SPEC</c><c>This document</c>
-          <c>23</c><c>&nbsp;LSP-DB-VERSION</c><c>This document</c>
-          <c>24</c><c>&nbsp;PREDUNDANCY-GROUP-ID</c><c>This document</c>
         </texttable>
       </section>
 
@@ -2207,7 +1960,6 @@ Where:
           <ttcol align="left" width='30%'>Description </ttcol>
           <ttcol align="left" width='55%'>Reference </ttcol>
           <c></c><c>&nbsp;</c><c></c>
-          <c>30</c><c>INCLUDE-DB-VERSION (IDB)</c><c>This document</c>
           <c>31</c><c>LSP-UPDATE-CAPABILITY</c><c>This document</c>
         </texttable>
       </section>
@@ -2232,11 +1984,10 @@ Where:
         </texttable>
       </section>
       
-      <section anchor="LSP-SIG-TYPE" title="LSP-SIG-TYPE field in the LSP object">
+      <section anchor="lsp-sig-type-value" title="LSP-SIG-TYPE-TLV">
         <?rfc subcompact="no"?>
         <t>This document requests that a registry is created to manage the value
-        of the LSP type field in the LSP object, which defines the technology
-        used for LSP setup. </t>
+        of the LSP Signaling Type field in this TLV.</t>
         
         <texttable anchor="LSP-SIG-TYPE-val" style="none" suppress-title="true">
           <ttcol align="center" width='20%'>Value</ttcol>
@@ -2262,10 +2013,6 @@ Where:
         specify an LSP delegation policy where LSPs are delegated to the
         most-preferred online PCE. A PCC MAY allow the operator to specify
         different LSP delegation policies.</t>
-
-        <t>A PCE or PCC implementation SHOULD allow the operator to configure a
-        PREDUNDANCY-GROUP-ID (<xref
-        target="PREDUNDANCY-GROUP-ID-TLV-OPEN"/>).</t>
 
         <t>A PCC implementation which allows concurrent connections to multiple
         PCEs SHOULD allow the operator to group the PCEs by administrative
@@ -2450,7 +2197,7 @@ Where:
 
       <t>We would like to thank Shane Amante, Julien Meuric, Kohei Shiomoto,
       Paul Schultz and Raveendra Torvi for their comments and suggestions.
-      Thanks also to Cyril Margaria, Jon Hardwick, Dhruv Dhoddy, Oscar Gonzales
+      Thanks also to Cyril Margaria, Jon Hardwick, Dhruv Dhoddy, Ramon Casellas, Oscar Gonzales
       de Dios, Tomas Janciga, Stefan Kobza, Kexin Tang, Matej Spanik, Jon
       Parker, Marek Zavodsky, Ambrose Kwong, Ashwin Sampath, Calvin Ying and
       Xian Zhang for helpful comments and discussions.</t>
