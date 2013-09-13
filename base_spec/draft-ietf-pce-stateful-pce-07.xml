@@ -432,7 +432,7 @@
           <t hangText="Path Computation State Report (PCRpt):"> a PCEP message
           sent by a PCC to a PCE to report the status of one or more LSPs. Each
           LSP Status Report in a PCRpt message can contain the actual LSP's
-          path,bandwidth, operational and administrative status, etc. An LSP
+          path, bandwidth, operational and administrative status, etc. An LSP
           Status Report carried on a PCRpt message is also used in delegation or
           revocation of control of an LSP to/from a PCE. The PCRpt message is
           described in <xref target="PCRpt"/>.</t>
