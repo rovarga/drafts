@@ -440,7 +440,7 @@
           <t hangText="Path Computation Update Request (PCUpd):"> a PCEP message
           sent by a PCE to a PCC to update LSP parameters, on one or more LSPs.
           Each LSP Update Request on a PCUpd message MUST contain all LSP
-          parameters that a PCE wishes to set for a given LSP. An LSP Update
+          parameters that a PCE wishes to be set for a given LSP. An LSP Update
           Request carried on a PCUpd message is also used to return LSP
           delegations if at any point PCE no longer desires control of an LSP.
           The PCUpd message is described in <xref target="PCUpd"/>.</t>
@@ -1071,14 +1071,17 @@ Where:
         The reserved value 0x00000000 indicates that the state reported is not as a result
         of processing a PCUpd message.</t>
 
-        <t> If the PCRpt message is in response to a PCUpd message, the SRP
+        <t>If the PCRpt message is in response to a PCUpd message, the SRP
         object SHOULD be included and the value of the SRP-ID-number in
-        the SRP Object MUST be the same as that sent in the PCUpd message that triggered the
-        state that is reported. If the PCC compressed several PCUpd messages for the same LSP by
-        only processing the latest one, then it should use the SRP-ID-number of that request.
-        No state compression is allowed for state reporting. The PCC
+        the SRP Object MUST be the same as that sent in the PCUpd message that
+        triggered the state that is reported. If the PCC compressed several PCUpd
+        messages for the same LSP by only processing the latest one, then it should
+        use the SRP-ID-number of that request.  No state compression is allowed for
+        state reporting, e.g. PCRpt messages MUST NOT be pruned from the PCC's
+        egress queue even if subsequent operations on the same LSP have been
+        completed before the PCRpt message has been sent to the TCP stack. The PCC
         MUST explicitly report state changes (including removal) for paths it
-        manages. </t>
+        manages.</t>
 
         <t>The LSP object (see <xref target="LSP-Object-Format"/>) is mandatory,
         and it MUST be included in each LSP State Report on the PCRpt message.
@@ -1139,7 +1142,7 @@ Where:
         policy configured by the network manager.  Each LSP Update Request
         that the PCC acts on results in an LSP setup operation.
         An LSP Update Request MUST contain all LSP parameters that a PCE
-        wishes to set for the LSP. A PCC MAY set missing parameters from locally
+        wishes to be set for the LSP. A PCC MAY set missing parameters from locally
         configured defaults. If the LSP specified in the Update Request is already
         up, it will be re-signaled. </t>
 
@@ -1174,13 +1177,20 @@ Where:
 
         <t>If the rate of PCUpd messages sent to a PCC for the same target LSP
         exceeds the rate at which the PCC can signal LSPs into the network, the
-        PCC MAY perform state compression and only signal the last modification
-        in its queue, as the last PCUpd contains the most up-to-date desired
-        state for the LSP. If two PCUpd arrive for the same LSP in quick
-        succession and the PCC started the signaling of the changes relevant to
-        the first PCUpd, then it MUST wait until the signaling finishes (and
-        report the new state via a PCRpt) before attempting to apply the changes
-        indicated in the second PCUpd. </t>
+        PCC MAY perform state compression on its ingress queue. The compression
+        algorithm is based on the fact that each PCUpd request contains the complete
+        LSP state the PCE wishes to be set and works as follows: when the PCC
+        starts processing a PCUpd message at the head of its ingress queue, it may
+        search the queue forward for more recent PCUpd messages pertaining that
+        particular LSP, prune all but the latest one from the queue and process
+        only the last one as that request contains the most up-to-date desired state
+        for the LSP. The PCC MUST NOT send PCRpt nor PCErr messages for requests
+        which were pruned from the queue in this way. This compression step may be
+        performed only while the LSP is not being signaled, e.g. if two PCUpd arrive
+        for the same LSP in quick succession and the PCC started the signaling of
+        the changes relevant to the first PCUpd, then it MUST wait until the
+        signaling finishes (and report the new state via a PCRpt) before attempting
+        to apply the changes indicated in the second PCUpd.</t>
 
         <t>Note also that it is up to the PCE to handle inter-LSP dependencies;
         for example, if ordering of LSP set-ups is required, the PCE has to wait
