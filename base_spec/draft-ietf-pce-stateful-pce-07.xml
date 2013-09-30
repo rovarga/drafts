@@ -70,7 +70,7 @@
         <email>robert.varga@pantheon.sk</email>
       </address>
     </author>
-    <date day="3" month="September" year="2013" />
+    <date day="3" month="October" year="2013" />
 
     <workgroup>Network Working Group</workgroup>
 
@@ -486,8 +486,8 @@
         one or both PCEP Speakers have not included the Stateful PCE Capability
         TLV in their respective OPEN message. If the PCEP Speakers support the
         extensions of this draft but did not negotiate this capability, then a PCErr with 
-		error-type 19 (Invalid Operation), error-value 2 (Attempted LSP Update Request if 
-		active stateful PCE capability was not negotiated)(see <xref
+        error-type 19 (Invalid Operation), error-value 2 (Attempted LSP Update Request if 
+        active stateful PCE capability was not negotiated)(see <xref
         target="PCEP-Error-Object"/>) will be generated and the PCEP session
         will be terminated.</t>
 
@@ -496,7 +496,7 @@
         "Stateful Capability" TLV to 'Updates Allowed (U Flag = 1)'. If this is
         not the case and LSP delegation or LSP update operations are attempted,
         then a PCErr with error-type 19 (Invalid Operation) and error-value 1 (Attempted 
-		LSP Update Request for a non-delegated LSP).(see <xref
+        LSP Update Request for a non-delegated LSP).(see <xref 
         target="PCEP-Error-Object"/>) SHOULD be generated. Note that even if the
         update capability has not been negotiated, a PCE can still receive LSP
         Status Reports from a PCC and build and maintain an up to date view of
@@ -530,22 +530,28 @@
         to get the best possible view of the network before it starts computing
         new paths.</t>
 
+        <t> Either the PCE or the PCC MAY terminate the session using the PCEP
+        session termination procedures during the synchronization phase.
+        If the session is terminated, the PCE MUST clean up state it received 
+        from this PCC. The session reestablishment MUST be re-attempted per the procedures 
+        defined in <xref target="RFC5440"/>, including use of a back-off timer.</t>
+        
         <t>If the PCC encounters a problem which prevents it from completing the
-        state transfer, it MUST send a PCErr message to the PCE and terminate
-        the session using the PCEP session termination procedure.</t>
-
-        <t> In the event of a PCC resetting the session during synchronization,
-        the PCE MUST clean up state it received from this PCC. Session
-        reestablishment MUST be re-attempted per the procedures defined in <xref
-        target="RFC5440"/>. </t>
+        state transfer, it MUST send a PCErr message with error-type 20 (LSP 
+        State Synchronization Error) and error-value 2 (indicating an internal 
+        PCC error) to the PCE and terminate the session. </t>
 
         <t>The PCE does not send positive acknowledgements for properly received
-        synchronization messages. It MUST respond with a PCErr message with 
+        synchronization messages. It MUST respond with a PCErr message with
 		error-type 20 (LSP State Synchronization Error) and error-value 1
-        (indicating an error in processing the PCRpt) (see <xref target="PCEP-Error-Object"/>) if it
-        encounters a problem with the LSP State Report it received from the
-        PCC. Either the PCE or the PCC MAY terminate the session if the PCE
-        encounters a problem during the synchronization.</t>
+        (indicating an error in processing the PCRpt) (see <xref target="PCEP-Error-Object"/>) 
+		if it encounters a problem with the LSP State Report it received from the PCC and 
+		it MUST terminate the session.</t>
+		
+		<t> A PCE implementing a limit on the resources a single PCC can occupy, 
+		MUST send a PCErr  message with error-type 19 (invalid operation) and error-value 4 
+	   (indicating resource limit exceeded) in response to the PCRpt message triggering 
+	   this condition in the synchronization phase and MUST terminate the session. </t> 
 
         <t>The successful State Synchronization sequence is shown in <xref
         target="Synchro-success"/>.</t>
@@ -625,8 +631,7 @@
         <t> Optimizations to the synchronization procedures and alternate
         mechanisms of providing the synchronization function are outside the scope 
 		of this document and are discussed in separate documents
-		(see XXX TBD link to the lsp-sync draft for optimizations to the synchronization
-        procedures).</t>
+		(see XXX TBD link).</t>
       </section>
 
       <section anchor="Delegation" title="LSP Delegation">
@@ -1095,6 +1100,13 @@ Where:
 
         <t>The RRO SHOULD be included by the PCC when the path is up, but MAY be
         omitted if the path is down due to a signaling error or another failure. </t>
+		
+		<t> A PCE may choose to implement a limit on the resources a single PCC can occupy.
+		If a PCRpt is received that causes the PCE to exceed this limit, it 
+		MUST send a PCErr  message with error-type 19 (invalid operation) and error-value 4 
+	   (indicating resource limit exceeded) in response to the PCRpt message triggering 
+	   this condition and MAY terminate the session.</t> 
+	   
       </section> <!-- PCRpt message --> 
 
       <section anchor="PCUpd" title="The PCUpd Message">
@@ -1481,6 +1493,8 @@ Where:
   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
   |                        Extended Tunnel ID                     |
   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |                   IPv4 Tunnel Endpoint Address                |
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
             ]]></artwork>
           </figure>
 
@@ -1504,6 +1518,10 @@ Where:
             <t hangText="Extended Tunnel ID:"> contains the 32-bit 'Extended
             Tunnel ID' identifier defined in <xref target="RFC3209"/>, Section
             4.6.1.1 for the LSP_TUNNEL_IPv4 Session Object.</t>
+			
+			<t hangText="IPv4 Tunnel Endpoint Address:"> contains the egress
+            node's IPv4 address, as defined in <xref target="RFC3209"/>, Section
+            4.6.1.1 for the LSP_TUNNEL_IPv4 Sender Template Object.</t>
           </list>
           </t>
 
@@ -1535,6 +1553,14 @@ Where:
   +                                                               +
   |                                                               |
   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |                                                               |
+  +                                                               +
+  |                  IPv6 tunnel endpoint address                 |
+  +                          (16 octets)                          +
+  |                                                               |
+  +                                                               +
+  |                                                               |
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
             ]]></artwork>
           </figure>
 
@@ -1561,6 +1587,10 @@ Where:
 
             <t hangText="Extended Tunnel ID:"> contains the 128-bit 'Extended
             Tunnel ID' identifier defined in <xref target="RFC3209"/>, Section
+            4.6.1.2 for the LSP_TUNNEL_IPv6 Session Object.</t>
+			
+			<t hangText="IPv6 Tunnel Endpoint Address:"> contains the egress node's 
+			IPv6 address, as defined in <xref target="RFC3209"/>, Section
             4.6.1.2 for the LSP_TUNNEL_IPv6 Session Object.</t>
           </list>
           </t>
@@ -1794,6 +1824,10 @@ Where:
 
             <t hangText=" Error-value=3:">Attempted LSP Update Request for an
             LSP identified by an unknown PLSP-ID.</t>
+			
+			<t hangText=" Error-value=4:">A PCE indicates to a PCC that it has exceeded
+			the resource limit allocated for its state, and thus it cannot
+            accept and process its LSP State Report message.</t>
 
           </list>
           </t>
@@ -1803,7 +1837,10 @@ Where:
             <t hangText=" Error-value=1:">A PCE indicates to a PCC that it can
             not process (an otherwise valid) LSP State Report.  The PCEP-ERROR
             Object is followed by the LSP Object that identifies the LSP.</t>
-
+			
+			<t hangText=" Error-value=2:">A PCC indicates to a PCE that it can
+            not complete the state synchronization,</t>
+			
           </list>
           </t>
         </list>
@@ -2058,7 +2095,10 @@ Where:
         <t>A stateful session also result in increased attack surface by placing
         a requirement for the PCE to keep an LSP state replica for each PCC. It
         is RECOMMENDED that PCE implementations provide a limit on resources a
-        single PCC can occupy.</t>
+        single PCC can occupy. A PCE implementing such a limit MUST send a PCErr 
+		message with error-type 19 (invalid operation) and error-value 4 (indicating
+		resource limit exceeded) upon receiving an LSP state report causing it to 
+		exceed this threshold.</t>
 
         <t>Delegation of LSPs can create further strain on PCE resources and a
         PCE implementation MAY preemptively give back delegations if it finds
