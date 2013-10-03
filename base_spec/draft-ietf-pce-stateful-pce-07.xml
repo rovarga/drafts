@@ -538,7 +538,7 @@
         
         <t>If the PCC encounters a problem which prevents it from completing the
         state transfer, it MUST send a PCErr message with error-type 20 (LSP 
-        State Synchronization Error) and error-value 4 (indicating an internal 
+        State Synchronization Error) and error-value 5 (indicating an internal 
         PCC error) to the PCE and terminate the session. </t>
 
         <t>The PCE does not send positive acknowledgements for properly received
@@ -1838,7 +1838,7 @@ Where:
             not process (an otherwise valid) LSP State Report.  The PCEP-ERROR
             Object is followed by the LSP Object that identifies the LSP.</t>
 			
-			<t hangText=" Error-value=4:">A PCC indicates to a PCE that it can
+			<t hangText=" Error-value=5:">A PCC indicates to a PCE that it can
             not complete the state synchronization,</t>
 			
           </list>
