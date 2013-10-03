@@ -361,7 +361,7 @@
       from a PCE towards a PCC (E-C). The new functions are:
 
       <list style="hanging">
-        <t hangText="Capability negotiation (E-C,C-E):"> both the PCC and the
+        <t hangText="Capability advertisement (E-C,C-E):"> both the PCC and the
         PCE must announce during PCEP session establishment that they support
         PCEP Stateful PCE extensions defined in this document.</t>
 
@@ -454,7 +454,7 @@
                    title="New Function to Message Mapping">
           <ttcol align="left" width="60%">Function</ttcol>
           <ttcol align="left">Message</ttcol>
-          <c>Capability Negotiation (E-C,C-E)</c><c>Open</c>
+          <c>Capability Advertisement (E-C,C-E)</c><c>Open</c>
           <c>State Synchronization (C-E)</c><c>PCRpt</c>
           <c>LSP State Report (C-E)</c><c>PCRpt</c>
           <c>LSP Control Delegation (C-E,E-C)</c><c>PCRpt, PCUpd</c>
@@ -465,9 +465,9 @@
         </texttable>
       </section>
 
-      <section anchor="Capability" title="Capability Negotiation">
+      <section anchor="Capability" title="Capability Advertisement">
         <t>During PCEP Initialization Phase, PCEP Speakers (PCE or PCC)
-        negotiate the use of stateful PCEP extensions. A PCEP Speaker includes
+        advertise their support of stateful PCEP extensions. A PCEP Speaker includes
         the "Stateful PCE Capability" TLV, described in <xref
         target="Capability-TLV"/>, in the OPEN Object to advertise its support
         for PCEP stateful extensions. The Stateful Capability TLV includes the
@@ -485,9 +485,9 @@
         <t>The PCEP protocol extensions for stateful PCEs MUST NOT be used if
         one or both PCEP Speakers have not included the Stateful PCE Capability
         TLV in their respective OPEN message. If the PCEP Speakers support the
-        extensions of this draft but did not negotiate this capability, then a PCErr with 
+        extensions of this draft but did not advertise this capability, then a PCErr with 
         error-type 19 (Invalid Operation), error-value 2 (Attempted LSP Update Request if 
-        active stateful PCE capability was not negotiated)(see <xref
+        active stateful PCE capability was not advertised)(see <xref
         target="PCEP-Error-Object"/>) will be generated and the PCEP session
         will be terminated.</t>
 
@@ -498,7 +498,7 @@
         then a PCErr with error-type 19 (Invalid Operation) and error-value 1 (Attempted 
         LSP Update Request for a non-delegated LSP).(see <xref 
         target="PCEP-Error-Object"/>) SHOULD be generated. Note that even if the
-        update capability has not been negotiated, a PCE can still receive LSP
+        update capability has not been advertised, a PCE can still receive LSP
         Status Reports from a PCC and build and maintain an up to date view of
         the state of the PCC's LSPs.</t>
 
@@ -515,7 +515,7 @@
         of LSP State Reports. Each LSP State Report sent during State
         Synchronization has the SYNC Flag in the LSP Object set to 1. The set of
         LSPs for which state is synchronized with a PCE is determined by
-        negotiated stateful PCEP capabilities and PCC's local configuration (see
+        advertised stateful PCEP capabilities and PCC's local configuration (see
         more details in <xref target="Ctl-Function-Policy"/>). </t>
 
         <t> The end of synchronization marker is a PCRpt message with the SYNC
@@ -635,7 +635,7 @@
       </section>
 
       <section anchor="Delegation" title="LSP Delegation">
-        <t>If during Capability negotiation both the PCE and the PCC have
+        <t>If during Capability advertisement both the PCE and the PCC have
         indicated that they support LSP Update, then the PCC may choose to grant
         the PCE a temporary right to update (a subset of) LSP attributes on one
         or more LSPs. This is called "LSP Delegation", and it MAY be performed
@@ -1213,7 +1213,7 @@ Where:
       </section> <!-- PCUpd message --> 
 
       <section anchor="PCErr" title="The PCErr Message">
-        <t> If the stateful PCE capability has been negotiated on the PCEP
+        <t> If the stateful PCE capability has been advertised on the PCEP
         session, the PCErr message MAY include the SRP object. If the error
         reported is the result of an LSP update request, then the SRP-ID-number
         MUST be the one from the PCUpd that triggered the error.  If the error is
@@ -1257,7 +1257,7 @@ Where:
 
         <section anchor="Capability-TLV" title="Stateful PCE Capability TLV">
           <t>The STATEFUL-PCE-CAPABILITY TLV is an optional TLV for use in the
-          OPEN Object for stateful PCE capability negotiation. Its format is
+          OPEN Object for stateful PCE capability advertisement. Its format is
           shown in the following figure:</t>
 
           <figure anchor="Capability-TLV-Fmt" title="STATEFUL-PCE-CAPABILITY TLV format">
@@ -1290,7 +1290,7 @@ Where:
           Unassigned bits are considered reserved. They MUST be set to 0 on
           transmission and MUST be ignored on receipt. </t>
 
-          <t> Negotiation of the stateful PCE capability implies support of LSPs
+          <t> Advertisement of the stateful PCE capability implies support of LSPs
           that are signaled via RSVP, as well as the objects, TLVs and
           procedures defined in this document.
           </t>
@@ -1820,7 +1820,7 @@ Where:
             Object that identifies the LSP.</t>
 
             <t hangText=" Error-value=2:">Attempted LSP Update Request if active
-            stateful PCE capability was not negotiated active PCE.</t>
+            stateful PCE capability was not advertised.</t>
 
             <t hangText=" Error-value=3:">Attempted LSP Update Request for an
             LSP identified by an unknown PLSP-ID.</t>
@@ -1969,7 +1969,7 @@ Where:
 
       <section anchor="Information-Data-Models" title="Information and Data Models">
         <t>PCEP session configuration and information in the PCEP MIB module
-        SHOULD be extended to include negotiated stateful capabilities,
+        SHOULD be extended to include advertised stateful capabilities,
         synchronization status, and delegation status (at the PCC list PCEs with
         delegated LSPs).</t>
         <t></t>
