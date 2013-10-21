@@ -1,57 +1,87 @@
 module ietf-netconf {
+    // vi: set et smarttab sw=4 tabstop=4:
     namespace "urn:ietf:params:xml:ns:netconf:exi:1.0";
 
     prefix exi;
 
     organization
-      "IETF NETCONF (Network Configuration) Working Group";
+        "IETF NETCONF (Network Configuration) Working Group";
 
     contact
-       "Robert Varga <robert.varga@pantheon.sk>";
+        "Robert Varga <robert.varga@pantheon.sk>";
 
     description
-      "NETCONF Protocol Operations for Efficient XML Interchange.";
+        "NETCONF Protocol Operations for Efficient XML Interchange.";
 
-    revision 2013-07-07 {
-      description
-        "Initial revision";
-      reference
-        "I-D.varga-netconf-exi-capability";
+    revision 2013-10-21 {
+        description
+            "Initial revision";
+        reference
+            "I-D.varga-netconf-exi-capability-01";
+    }
+
+    typedef exi-alignment {
+        type enumeration {
+            enum bit-packed {
+                description "Use bit-packed EXI alignment";
+            }
+            enum byte-aligned {
+                description "Use byte-aligned EXI alignment";
+            }
+            enum pre-compression {
+                description "Use pre-compression EXI alignment";
+            }
+            enum compressed {
+                description "Do not set EXI alignment, use EXI compression instead";
+            }
+        }
+    }
+
+    typedef exi-fidelity {
+        type enumeration {
+            enum comments {
+                description "Preserve.comments EXI Fidelity option";
+            }
+            enum dtd {
+                description "Preserve.dtd EXI Fidelity option";
+            }
+            enum lexical-values {
+                description "Preserve.lexicalValues EXI Fidelity option";
+            }
+            enum pis {
+                description "Preserve.pis EXI Fidelity option";
+            }
+            enum prefixes {
+                description "Preserve.prefixes EXI Fidelity option";
+            }
+        }
     }
 
     rpc start-exi {
-    	description
-	    "Start encoding protocol messages in Efficient XML Interchange
-	     format.";
-	
-	reference "I-D.varga-netconf-exi-capability";
+        description
+            "Start encoding protocol messages in Efficient XML Interchange
+            format.";
 
-	input {
-	    leaf alignment {
-	        type enumeration {
-		    enum bit-packed {
-		        description "Use bit-packed EXI alignment";
-		    }
-		    enum byte-aligned {
-		        description "Use byte-aligned EXI alignment";
-		    }
-		    enum pre-compression {
-		        description "Use pre-compression EXI alignment";
-		    }
-		    enum compressed {
-		        description "Do not set EXI alignment, use EXI compression instead";
-		    }
-		}
-		default "bit-packed";
-		description "EXI alignment to use.";
-	    }
+        reference "I-D.varga-netconf-exi-capability";
 
-	    leaf fidelity {
-	        type enumeration
+        input {
+            leaf alignment {
+                type exi-alignment;
+                default "bit-packed";
+                description "EXI alignment to use.";
+            }
 
+            leaf-list fidelity {
+                type exi-fidelity;
+                description "EXI fidelity options to use.";
+            }
+        }
+    }
 
-	    }
-	}
+    rpc stop-exi {
+        description
+            "Stop encoding protocol messages in Efficient XML Interchange
+            format. Revert back to using the usual text XML encoding.
     }
 }
 
