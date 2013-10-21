@@ -31,7 +31,7 @@
 			</address>
 		</author>
 
-		<date day="15" month="July" year="2013" />
+		<date day="21" month="October" year="2013" />
 
 		<workgroup>NETCONF Working Group</workgroup>
 
@@ -333,7 +333,7 @@
 			</section>
 		</section>
 
-		<section anchor="yang" title="YANG module for &lt;start-exit> and &lt;stop-exi> Operations">
+		<section anchor="yang" title="YANG module for &lt;start-exi> and &lt;stop-exi> Operations">
 			<t>
 				The following YANG module defines the new operations introduced in this document.
 				The YANG language is defined in <xref target="RFC6020"/>.  Every NETCONF speaker
