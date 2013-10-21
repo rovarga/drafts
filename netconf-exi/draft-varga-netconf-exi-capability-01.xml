@@ -339,115 +339,115 @@
 				The YANG language is defined in <xref target="RFC6020"/>.  Every NETCONF speaker
 				that supports the :exi capability MUST implement this YANG module.
 			</t>
-
-			<t>
+			<figure>
+				<artwork type="yang">
 				<![CDATA[
 <CODE BEGINS> file "ietf-netconf-exi@2013-10-21.yang"
 
 module ietf-netconf-exi {
-    // vi: set et smarttab sw=4 tabstop=4:
-    namespace "urn:ietf:params:xml:ns:netconf:exi:1.0";
+	namespace "urn:ietf:params:xml:ns:netconf:exi:1.0";
 
-    prefix exi;
+	prefix exi;
 
-    organization
-        "IETF NETCONF (Network Configuration) Working Group";
+	organization
+		"IETF NETCONF (Network Configuration) Working Group";
 
-    contact
-        "Robert Varga <robert.varga@pantheon.sk>";
+	contact
+		"Robert Varga <robert.varga@pantheon.sk>";
 
-    description
-        "NETCONF Protocol Operations for Efficient XML Interchange.";
+	description
+		"NETCONF Protocol Operations for Efficient XML Interchange.";
 
-    revision 2013-10-21 {
-        description
-            "Initial revision";
-        reference
-            "I-D.varga-netconf-exi-capability-01";
-    }
+	revision 2013-10-21 {
+		description
+			"Initial revision";
+		reference
+			"I-D.varga-netconf-exi-capability-01";
+	}
 
-    typedef exi-alignment {
-        type enumeration {
-            enum bit-packed {
-                description
-                    "Use bit-packed EXI alignment";
-            }
-            enum byte-aligned {
-                description
-                    "Use byte-aligned EXI alignment";
-            }
-            enum pre-compression {
-                description
-                    "Use pre-compression EXI alignment";
-            }
-            enum compressed {
-                description
-                    "Do not set EXI alignment, use EXI compression
-                    instead";
-            }
-        }
+	typedef exi-alignment {
+		type enumeration {
+			enum bit-packed {
+				description
+					"Use bit-packed EXI alignment";
+			}
+			enum byte-aligned {
+				description
+					"Use byte-aligned EXI alignment";
+			}
+			enum pre-compression {
+				description
+					"Use pre-compression EXI alignment";
+			}
+			enum compressed {
+				description
+					"Do not set EXI alignment, use EXI compression
+					instead";
+			}
+		}
 
-        description "EXI alignment specification.";
-    }
+		description "EXI alignment specification.";
+	}
 
 
-    typedef exi-fidelity {
-        type enumeration {
-            enum comments {
-                description
-                    "Preserve.comments EXI Fidelity option";
-            }
-            enum dtd {
-                description
-                    "Preserve.dtd EXI Fidelity option";
-            }
-            enum lexical-values {
-                description
-                    "Preserve.lexicalValues EXI Fidelity option";
-            }
-            enum pis {
-                description
-                    "Preserve.pis EXI Fidelity option";
-            }
-            enum prefixes {
-                description
-                    "Preserve.prefixes EXI Fidelity option";
-            }
-        }
+	typedef exi-fidelity {
+		type enumeration {
+			enum comments {
+				description
+					"Preserve.comments EXI Fidelity option";
+			}
+			enum dtd {
+				description
+					"Preserve.dtd EXI Fidelity option";
+			}
+			enum lexical-values {
+				description
+					"Preserve.lexicalValues EXI Fidelity option";
+			}
+			enum pis {
+				description
+					"Preserve.pis EXI Fidelity option";
+			}
+			enum prefixes {
+				description
+					"Preserve.prefixes EXI Fidelity option";
+			}
+		}
 
-        description "EXI fidelity options.";
-    }
+		description "EXI fidelity options.";
+	}
 
-    rpc start-exi {
-        description
-            "Start encoding protocol messages in Efficient XML
-            Interchange format.";
+	rpc start-exi {
+		description
+			"Start encoding protocol messages in Efficient XML
+			Interchange format.";
 
-        reference "I-D.varga-netconf-exi-capability";
+		reference "I-D.varga-netconf-exi-capability";
 
-        input {
-            leaf alignment {
-                type exi-alignment;
-                default "bit-packed";
-                description "EXI alignment to use.";
-            }
+		input {
+			leaf alignment {
+				type exi-alignment;
+				default "bit-packed";
+				description "EXI alignment to use.";
+			}
 
-            leaf-list fidelity {
-                type exi-fidelity;
-                description "EXI fidelity options to use.";
-            }
-        }
-    }
+			leaf-list fidelity {
+				type exi-fidelity;
+				description "EXI fidelity options to use.";
+			}
+		}
+	}
 
-    rpc stop-exi {
-        description
-            "Stop encoding protocol messages in Efficient XML
-            Interchange format. Revert back to using the usual text
-            XML encoding.";
-    }
+	rpc stop-exi {
+		description
+			"Stop encoding protocol messages in Efficient XML
+			Interchange format. Revert back to using the usual text
+			XML encoding.";
+	}
 }
 ]]>
-			</t>
+				</artwork>
+			</figure>
 		</section>
 
 		<section anchor="IANA-considerations" title="IANA considerations">
