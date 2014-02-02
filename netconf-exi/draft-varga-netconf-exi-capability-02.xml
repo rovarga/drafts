@@ -114,6 +114,11 @@
 					mechanism as described in <xref target="RFC6242"/> when used with SSH
 					transport.
 				</t>
+				<t>
+					The optional Dynamic Schema-informed Encoding Negotiation mechanism relies
+					on NETCONF Notifications as specified in <xref target="RFCXXXX"/> and reuses
+					types defined in <xref target="RFC6022"/>.
+				</t>
 			</section>
 
 			<section anchor="Identifier" title="Capability Identifier">
@@ -134,11 +139,26 @@
 						<t hangText="schemas:">
 							This indicates that the sender can use schema-informed grammars for
 							EXI encoding. The parameter MUST contain a value, which has to be one
-							of "builtin" or "base:1.1". The value "builtin" indicates the ability
-							to use the XML schema built into the EXI specification. The value of
-							"base:1.1" is a superset of the "builtin" value and indicates that the
-							sender additionally supports schema-informed EXI encoding, based on
-							netconf.xsd schema published in <xref target="RFC6241"/>.
+							of "builtin", "base:1.1" or "dynamic".
+
+							<list style="hanging">
+								<t hangtext="builtin">
+									Indicates the ability to use the XML schema built into the EXI
+									specification.
+								</t>
+
+								<t hangtext="base:1.1">
+									Superset of "builtin", indicates that the sender additionally
+									supports schema-informed EXI encoding, based on netconf.xsd
+									schema published in <xref target="RFC6241"/>.
+								</t>
+
+								<t hangtext="dynamic">
+									Superset of "base:1.1", indicates that the sender additionally
+									supports dynamic schema-informed encoding negotiation outlined
+									below.
+								</t>
+							</list>
 						</t>
 					</list>
 				</t>
@@ -157,11 +177,57 @@
 						<t>
 							urn:ietf:params:netconf:capability:exi:1.0?compression=20000&amp;schemas=builtin
 						</t>
+						<t>
+							urn:ietf:params:netconf:capability:exi:1.0?schemas=dynamic
+						</t>
 					</list>
 				</t>
 			</section>
 
-			<section anchor="Operations" title="New Operations">
+			<section anchor="DynamicSchemas" title="Dynamic Schema-informed Encoding Negotiation">
+				<t>
+					The core of this extension relies on shared knowledge between the server and
+					the client where schema-informed encoding is concerned. This limits the
+					encoding efficiency as the actual data transferred over the session is
+					encoded using the equivalent of the builtin schema. Alleviating this
+					limitation requires a mechanism for discovering data schemas and a protocol
+					for synchronizing their activation.
+				</t>
+				<t>
+					The base schema discovery mechanism is already present in
+					<xref target="RFC6241"/>. This document extends the /schemas/schema subtree
+					with a new leaf which indicates whether the server supports the use of that
+					particular schema in the EXI schema-informed encoding process.
+				</t>
+				<t>
+					The negotiation of use of a particular schema for encoding has multiple
+					aspects. First and foremost is the concern of constrained environments, which
+					may have limited resources and thus their ability to dedicate them to
+					improving encoding efficiency may change over lifetime of a NETCONF session.
+					The second issue comes from the need to synchronize the values used in the
+					"schema" EXI header field. Both end of the session need to map names to the
+					same schemas, otherwise the decoding process will not succeed. This name is
+					carried verbatim in the stream, so it should be as concise as possible.
+				</t>
+
+				<section anchor="SimpleDiscovery" title="Simple Schema Discovery">
+
+				</section>
+
+				<section anchor="DynamicDiscovery" title="Dynamic Schema Discovery">
+					<t>
+						The schema information store is extend with a
+						boolean leaf indicating whether the server supports using the schema for the
+						purposes of schema-aware EXI encoding. We further define a set of
+						notifications which provide a way for the server to notify the client of
+						changes to the schema store, namely when schemas become available or
+						unavailable for EXI encoding.
+					</t>
+				</section>
+
+			</section>
+
+			<section anchor="MandatoryOperations" title="New Mandatory Operations">
 				<section anchor="start-exi" title="&lt;start-exi>">
 					<t>
 						<list style="hanging">
@@ -177,8 +243,8 @@
 								The client MUST NOT send any messages to the server between the
 								time is sends this request and the time it receives a response.
 								Once it receives a positive reply, it MUST encode all subsequent
-								messages using the EXI encoding with the parameters supplied in the
-								RPC.
+								messages using the EXI encoding with the parameters supplied in
+								the RPC.
 
 								If the operation fails, the session message encoding remains
 								unchanged.
@@ -239,7 +305,7 @@
 											</t>
 											<t hangText="builtin">
 												Do no use schema-informed grammars, but use the
-												build-in XML data types. This translates to using
+												built-in XML data types. This translates to using
 												an empty schemaId in the EXI Options header.
 											</t>
 											<t hangText="base:1.1">
@@ -247,6 +313,11 @@
 												as published in <xref target="RFC6241"/> in
 												non-strict mode. The value "base:1.1" should be
 												carried in the schemaId field in the EXI Options.
+											</t>
+											<t hangText="dynamic">
+												Same as base:1.1 with the additional support for
+												dynamically modifying which schemas are available
+												for schema-informed encoding.
 											</t>
 										</list>
 									</t>
@@ -480,6 +551,7 @@ module ietf-netconf-exi {
 		<references title="Normative References">
 			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.2119.xml"?>
 			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.6020.xml"?>
+			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.6022.xml"?>
 			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.6241.xml"?>
 			<?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.6242.xml"?>
 			<?rfc include="http://xml.resource.org/public/rfc/bibxml4/reference.W3C.REC-exi-20110310.xml"?>
