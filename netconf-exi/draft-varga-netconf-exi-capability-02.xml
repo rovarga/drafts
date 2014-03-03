@@ -12,7 +12,7 @@
 <?rfc compact="yes"?>
 <?rfc subcompact="no"?>
 <?rfc strict="yes"?>
-<rfc category="std" docName="draft-varga-netconf-exi-capability-01" ipr="trust200902">
+<rfc category="std" docName="draft-varga-netconf-exi-capability-02" ipr="trust200902">
 	<front>
 		<title abbrev="EXI Capability">
 			Efficient XML Interchange Capability for NETCONF
@@ -31,7 +31,7 @@
 			</address>
 		</author>
 
-		<date day="21" month="October" year="2013" />
+		<date day="3" month="March" year="2014" />
 
 		<workgroup>NETCONF Working Group</workgroup>
 
@@ -116,8 +116,7 @@
 				</t>
 				<t>
 					The optional Dynamic Schema-informed Encoding Negotiation mechanism relies
-					on NETCONF Notifications as specified in <xref target="RFCXXXX"/> and reuses
-					types defined in <xref target="RFC6022"/>.
+					on NETCONF Monitoring as defined in <xref target="RFC6022"/>.
 				</t>
 			</section>
 
@@ -142,18 +141,18 @@
 							of "builtin", "base:1.1" or "dynamic".
 
 							<list style="hanging">
-								<t hangtext="builtin">
+								<t hangText="builtin">
 									Indicates the ability to use the XML schema built into the EXI
 									specification.
 								</t>
 
-								<t hangtext="base:1.1">
+								<t hangText="base:1.1">
 									Superset of "builtin", indicates that the sender additionally
 									supports schema-informed EXI encoding, based on netconf.xsd
 									schema published in <xref target="RFC6241"/>.
 								</t>
 
-								<t hangtext="dynamic">
+								<t hangText="dynamic">
 									Superset of "base:1.1", indicates that the sender additionally
 									supports dynamic schema-informed encoding negotiation outlined
 									below.
@@ -195,9 +194,10 @@
 				</t>
 				<t>
 					The base schema discovery mechanism is already present in
-					<xref target="RFC6241"/>. This document extends the /schemas/schema subtree
-					with a new leaf which indicates whether the server supports the use of that
-					particular schema in the EXI schema-informed encoding process.
+					<xref target="RFC6022"/>. This document extends the /netconf-state/schemas/schema
+					subtree with a new leaf, exi-useable, which indicates whether the server
+					supports the use of that particular schema in the EXI schema-informed
+					encoding process.
 				</t>
 				<t>
 					The negotiation of use of a particular schema for encoding has multiple
@@ -209,22 +209,18 @@
 					same schemas, otherwise the decoding process will not succeed. This name is
 					carried verbatim in the stream, so it should be as concise as possible.
 				</t>
-
-				<section anchor="SimpleDiscovery" title="Simple Schema Discovery">
-
-				</section>
-
-				<section anchor="DynamicDiscovery" title="Dynamic Schema Discovery">
-					<t>
-						The schema information store is extend with a
-						boolean leaf indicating whether the server supports using the schema for the
-						purposes of schema-aware EXI encoding. We further define a set of
-						notifications which provide a way for the server to notify the client of
-						changes to the schema store, namely when schemas become available or
-						unavailable for EXI encoding.
-					</t>
-				</section>
-
+				<t>
+					When the peers have both indicated support for Dynamic Schema-informed
+					Encoding, encoding starts in base:1.1 mode. The client then queries the server
+					for the list of schemas, looking for schemas which have the exi-useable leaf
+					set to true. It then selects the schemas it can use in EXI encoding process,
+					potentially requesting them from the server. Finally it prioritizes them
+					and sends a &lt;enable-schema-encoding> request for each of them. Once the
+					server has assigned a EXI schema-id and communicated it back the the client,
+					both parties can use this schema in EXI encoding. The client can request the
+					end of use of a particular schema via the &lt;disable-schema-encoding> RPC,
+					which the server SHOULD NOT fail.
+				</t>
 			</section>
 
 			<section anchor="MandatoryOperations" title="New Mandatory Operations">
@@ -402,6 +398,70 @@
 					</figure>
 				</section>
 			</section>
+
+			<section anchor="OptionalOperations" title="New Optional Operations">
+				<section anchor="enable-schema-encoding" title="&lt;enable-schema-encoding>">
+					<t>
+						<list style="hanging">
+							<t hangText="Description:">
+								The &lt;enable-schema-encoding> requests the device assign a numeric
+								identifier for use of a specific schema for EXI Schema-informed
+								encoding.
+							</t>
+							<t hangText="Parameters:">
+								<list style="hanging">
+									<t hangText="identifier:">
+										Schema identifier, as defined in <xref target="RFC6022"/>.
+									</t>
+									<t hangText="version:">
+										Schema version, as defined in <xref target="RFC6022"/>.
+									</t>
+									<t hangText="format:">
+										Schema format, as defined in <xref target="RFC6022"/>.
+									</t>
+								</list>
+							</t>
+							<t hangText="Positive Response:">
+								If the device was able to satisfy the request, an &lt;rpc-reply> is
+								sent that contains an &lt;exi-schema-id> element, which contains
+								the numeric identifier which should be used in the schemaId EXI header
+								field. This identifier has to be unique.
+							</t>
+							<t hangText="Negative Response:">
+								An &lt;rpc-error> element is included in the &lt;rpc-reply> if the
+								request cannot be completed for any reason.
+							</t>
+						</list>
+					</t>
+				</section>
+				<section anchor="disable-schema-encoding" title="&lt;disable-schema-encoding>">
+					<t>
+						<list style="hanging">
+							<t hangText="Description:">
+								The &lt;disable-schema-encoding> requests the device to deallocate
+								the schema ID from use on this session and stop using it for encoding
+								data towards the client.
+							</t>
+							<t hangText="Parameters:">
+								<list style="hanging">
+									<t hangText="exi-schema-id:">
+										EXI Schema ID, as assigned by a previous &lt;enable-schema-encoding>
+										call.
+									</t>
+								</list>
+							</t>
+							<t hangText="Positive Response:">
+								If the device was able to satisfy the request, an &lt;rpc-reply> is
+								sent that contains an &lt;ok> element.
+							</t>
+							<t hangText="Negative Response:">
+								An &lt;rpc-error> element is included in the &lt;rpc-reply> if the
+								request cannot be completed for any reason.
+							</t>
+						</list>
+					</t>
+				</section>
+			</section>
 		</section>
 
 		<section anchor="yang" title="YANG module for &lt;start-exi> and &lt;stop-exi> Operations">
@@ -413,108 +473,223 @@
 			<figure>
 				<artwork type="yang">
 				<![CDATA[
-<CODE BEGINS> file "ietf-netconf-exi@2013-10-21.yang"
+<CODE BEGINS> file "ietf-netconf-exi@2014-03-03.yang"
 
 module ietf-netconf-exi {
-	namespace "urn:ietf:params:xml:ns:netconf:exi:1.0";
+    // vi: set et smarttab sw=4 tabstop=4:
+    namespace "urn:ietf:params:xml:ns:netconf:exi:1.0";
 
-	prefix exi;
+    prefix exi;
 
-	organization
-		"IETF NETCONF (Network Configuration) Working Group";
+    import ietf-netconf-monitoring {
+        prefix ncm;
+        revision-date "2010-10-04";
+    }
 
-	contact
-		"Robert Varga <robert.varga@pantheon.sk>";
+    organization
+        "IETF NETCONF (Network Configuration) Working Group";
 
-	description
-		"NETCONF Protocol Operations for Efficient XML Interchange.";
+    contact
+        "Robert Varga <robert.varga@pantheon.sk>";
 
-	revision 2013-10-21 {
-		description
-			"Initial revision";
-		reference
-			"I-D.varga-netconf-exi-capability-01";
-	}
+    description
+        "NETCONF Protocol Operations for Efficient XML Interchange.";
 
-	typedef exi-alignment {
-		type enumeration {
-			enum bit-packed {
-				description
-					"Use bit-packed EXI alignment";
-			}
-			enum byte-aligned {
-				description
-					"Use byte-aligned EXI alignment";
-			}
-			enum pre-compression {
-				description
-					"Use pre-compression EXI alignment";
-			}
-			enum compressed {
-				description
-					"Do not set EXI alignment, use EXI compression
-					instead";
-			}
-		}
+    revision 2014-03-03 {
+        description
+            "Updated with dynamic schema negotiation.";
+        reference
+            "I-D.varga-netconf-exi-capability-02";
+    }
 
-		description "EXI alignment specification.";
-	}
+    revision 2013-10-21 {
+        description
+            "Initial revision";
+        reference
+            "I-D.varga-netconf-exi-capability-01";
+    }
 
+    typedef exi-alignment {
+        type enumeration {
+            enum bit-packed {
+                description
+                    "Use bit-packed EXI alignment";
+            }
+            enum byte-aligned {
+                description
+                    "Use byte-aligned EXI alignment";
+            }
+            enum pre-compression {
+                description
+                    "Use pre-compression EXI alignment";
+            }
+            enum compressed {
+                description
+                    "Do not set EXI alignment, use EXI compression
+                    instead";
+            }
+        }
 
-	typedef exi-fidelity {
-		type enumeration {
-			enum comments {
-				description
-					"Preserve.comments EXI Fidelity option";
-			}
-			enum dtd {
-				description
-					"Preserve.dtd EXI Fidelity option";
-			}
-			enum lexical-values {
-				description
-					"Preserve.lexicalValues EXI Fidelity option";
-			}
-			enum pis {
-				description
-					"Preserve.pis EXI Fidelity option";
-			}
-			enum prefixes {
-				description
-					"Preserve.prefixes EXI Fidelity option";
-			}
-		}
+        description "EXI alignment specification.";
+    }
 
-		description "EXI fidelity options.";
-	}
+    typedef exi-fidelity {
+        type enumeration {
+            enum comments {
+                description
+                    "Preserve.comments EXI Fidelity option";
+            }
+            enum dtd {
+                description
+                    "Preserve.dtd EXI Fidelity option";
+            }
+            enum lexical-values {
+                description
+                    "Preserve.lexicalValues EXI Fidelity option";
+            }
+            enum pis {
+                description
+                    "Preserve.pis EXI Fidelity option";
+            }
+            enum prefixes {
+                description
+                    "Preserve.prefixes EXI Fidelity option";
+            }
+        }
 
-	rpc start-exi {
-		description
-			"Start encoding protocol messages in Efficient XML
-			Interchange format.";
+        description "EXI fidelity options.";
+    }
 
-		reference "I-D.varga-netconf-exi-capability";
+    rpc start-exi {
+        description
+            "Start encoding protocol messages in Efficient XML
+            Interchange format.";
 
-		input {
-			leaf alignment {
-				type exi-alignment;
-				default "bit-packed";
-				description "EXI alignment to use.";
-			}
+        reference "I-D.varga-netconf-exi-capability";
 
-			leaf-list fidelity {
-				type exi-fidelity;
-				description "EXI fidelity options to use.";
-			}
-		}
-	}
+        input {
+            leaf alignment {
+                type exi-alignment;
+                default "bit-packed";
+                description "EXI alignment to use.";
+            }
 
-	rpc stop-exi {
-		description
-			"Stop encoding protocol messages in Efficient XML
-			Interchange format. Revert back to using the usual text
-			XML encoding.";
-	}
+            leaf-list fidelity {
+                type exi-fidelity;
+                description "EXI fidelity options to use.";
+            }
+        }
+    }
+
+    rpc stop-exi {
+        description
+            "Stop encoding protocol messages in Efficient XML
+            Interchange format. Revert back to using the usual text
+            XML encoding.";
+    }
+
+    grouping schema-identifier {
+        description
+            "The globally-unique identifier of a schema. This
+            grouping contains the verbatim transcription of arguments
+            to <get-schema> RPC as defined in RFC6022, except all
+            leaves are made mandatory.";
+
+        leaf identifier {
+            type string;
+            mandatory true;
+            description
+                "Identifier for the schema list entry.";
+        }
+
+        leaf version {
+            type string;
+            description
+                "Version of the schema requested.  If this parameter
+                is not present, and more than one version of the
+                schema exists on the server, a 'data-not-unique'
+                error is returned, as described above.";
+        }
+
+        leaf format {
+            type identityref {
+                base ncm:schema-format;
+            }
+            description
+                "The data modeling language of the schema.  If this
+                parameter is not present, and more than one formats
+                of the schema exists on the server, a
+                'data-not-unique' error is returned, as described
+                above.";
+        }
+    }
+
+    typedef exi-schema-id {
+        type uint16;
+        description
+            "Schema identifier for use in the EXI stream header.";
+    }
+
+    augment "/ncm:netconf-state/ncm:schemas/ncm:schema" {
+        description
+            "Additional information about schemas useful for EXI
+            encoding";
+
+        leaf exi-useable {
+            type boolean;
+            default false;
+            description
+                "Set to true if the device can use the schema for EXI
+                Schema-informed encoding.";
+        }
+        leaf exi-schema-id {
+            type exi-schema-id;
+            description
+                "The EXI schema ID currently assigned to this schema.
+                This value has meaning only within the session and
+                may differ on other sessions.";
+        }
+    }
+
+    rpc enable-schema-encoding {
+        description
+            "Request the use of specificied schema in EXI message
+            encoding.  This request is sent by the client to the
+            server. If the server is able to transition into using
+            the schema, it assigns it a unique EXI integer
+            identifier.  This identifier is to be used in the EXI
+            header as schema identifier.
+
+            The server may start using the identifier as soon as it
+            enqueus the response. The client may start using the
+            identifier as soon as it sees this RPC complete.";
+        input {
+            uses schema-identifier;
+        }
+        output {
+            leaf exi-schema-id {
+                type exi-schema-id;
+                mandatory true;
+                description
+                    "The EXI Schema ID assigned to this schema for
+                    encoding purposes.";
+            }
+        }
+    }
+
+    rpc disable-schema-encoding {
+        description
+            "This RPC is send by the client when it stops using a
+            particular exi-schema-id.";
+        input {
+            leaf exi-schema-id {
+                type exi-schema-id;
+                mandatory true;
+                description
+                    "The EXI Schema ID which should be disabled.";
+            }
+        }
+    }
 }
 ]]>
 				</artwork>
