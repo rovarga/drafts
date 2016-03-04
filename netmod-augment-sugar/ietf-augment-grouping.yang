@@ -1,4 +1,4 @@
-module augment-grouping {
+module ietf-augment-grouping {
     yang-version 1;
     namespace "urn:ietf:params:xml:ns:yang:ietf-grpaug";
     prefix ag;
@@ -85,4 +85,3 @@ module augment-grouping {
             "RFC XXXX Section ZZ, augment-grouping Feature";
     }
 }
-
