@@ -261,19 +261,34 @@ module augment-grouping {
 
         <section anchor="IANA-considerations" title="IANA considerations">
             <t>
-                This document registers the following capability identifier URN in the 'Network
-                Configuration Protocol (NETCONF) Capability URNs' registry:
+               This document registers a URI in the "IETF XML Registry" [RFC3688].
+               Following the format in RFC 3688, the following registration has been
+               made.
+            </t>
+            <t>
+                URI: urn:ietf:params:xml:ns:yang:ietf-grpaug
 
-                urn:ietf:params:netconf:capability:exi:1.0
+                Registrant Contact: The IESG.
+
+                XML: N/A, the requested URI is an XML namespace.
+            </t>
+            <t>
+               This document registers a YANG module in the "YANG Module Names"
+               registry [RFC6020].
+
+                  name:         augment-grouping
+                  namespace:    nurn:ietf:params:xml:ns:yang:ietf-grpaug
+                  prefix:       ag
+                  reference:    RFC XXXX
             </t>
         </section> 
 
         <section anchor="Security" title="Security Considerations">
             <t>
-                The compression option present in EXI specification may increase CPU and memory
-                requirements for encoding the response. Devices should ensure this overhead is
-                acceptable before agreeing to using EXI encoding, such that no operational risks
-                are introduced.
+                This document defines YANG data modeling extension. The extension itself
+                does have no security impact on the Internet, but the usage of this 
+                extension in concrete YANG modules might have.  The security considerations
+                spelled out in the YANG specification [RFC6020] apply for this document as well.
             </t>
         </section>
 
