@@ -163,9 +163,9 @@
             <figure>
                 <artwork type="yang">
                 <![CDATA[
-<CODE BEGINS> file "augment-grouping@2015-02-03.yang"
+<CODE BEGINS> file "ietf-augment-grouping@2015-02-03.yang"
 
-module augment-grouping {
+module ietf-augment-grouping {
     yang-version 1;
     namespace "urn:ietf:params:xml:ns:yang:ietf-grpaug";
     prefix ag;
@@ -274,7 +274,7 @@ module augment-grouping {
                 This document registers a YANG module in the "YANG Module Names"
                 registry [RFC6020].
                 <list style="hanging">
-                    <t hangText="name:">augment-grouping</t>
+                    <t hangText="name:">ietf-augment-grouping</t>
                     <t hangText="namespace:">urn:ietf:params:xml:ns:yang:ietf-grpaug</t>
                     <t hangText="prefix:">ag</t>
                     <t hangText="reference:">RFC XXXX</t>
