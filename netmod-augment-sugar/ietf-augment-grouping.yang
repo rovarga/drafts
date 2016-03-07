@@ -55,15 +55,19 @@ module ietf-augment-grouping {
     extension "augment-grouping" {
         description
             "Defines a set of augment statements to be attached to the grouping
-             identified by the argument. An instance of this extension can
-             carry one or more augment statements, which will be applied to
-             each instantiation of the target grouping.
+             identified by the argument.  An instance of this extension can carry 
+             one or more augment statements, which will be applied to each 
+             instantiation of the target grouping.
+             
+             The argument of this extension is 'identifier-ref-arg-str' as defined
+             in RFC6020 referencing definition of grouping, which instantiations
+             are augmented.
 
-             The argument of these augment statements must be a relative path,
+             The argument of these augment statements must be a relative path
              not an absolute and its target must lie within the grouping or
              augmentations introduced by other modules using this extension.
 
-             Argument value of \".\" indicates that the container (or list)
+             Argument value of \".\" indicates that the container (list or case)
              in which the grouping is being instantiated is to be augmented.
 
              All nodes introduced via this extension will have the namespace
